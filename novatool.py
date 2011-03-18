@@ -437,13 +437,14 @@ class fileListEvent(QObject):
                 self.parent.path = '%s%s' % (self.parent.path, self.parent.fileListModel.arraydata[idx][3])
             else:
                 self.parent.path = '%s/%s' % (self.parent.path, self.parent.fileListModel.arraydata[idx][3])
-            if self.parent.path != '/' and self.parent.fileListModel.arraydata[idx][3] == '.':
-                self.parent.path = self.parent.path[:-2]
-            elif self.parent.path != '/' and self.parent.fileListModel.arraydata[idx][3] == '..':
-                end = self.parent.path[:self.parent.path.rfind('/')].rfind('/')
-                self.parent.path = self.parent.path[:end]
-                if self.parent.path == '':
-                    self.parent.path = '/'
+            if self.parent.path != '/':
+                if self.parent.fileListModel.arraydata[idx][3] == '.':
+                    self.parent.path = self.parent.path[:-2]
+                elif self.parent.fileListModel.arraydata[idx][3] == '..':
+                    end = self.parent.path[:self.parent.path.rfind('/')].rfind('/')
+                    self.parent.path = self.parent.path[:end]
+            if self.parent.path == '' or self.parent.path == '/.':
+                self.parent.path = '/'
             if self.parent.fileListModel.arraydata[idx][0][0] == 'd':
                 self.parent.listDir()
             else:
@@ -458,7 +459,7 @@ class FileDlg(QDialog):
         self.port = port
         self.path = path
         
-        self.setMinimumWidth(600)
+        self.setMinimumSize(500,400)
         
         self.delegate = TypeSoortDelegate(self)
         
