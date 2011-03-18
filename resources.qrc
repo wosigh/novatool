@@ -1,0 +1,22 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>resources/icons/devices/Icon_Device_Pre1_128.png</file>
+    <file>resources/icons/devices/Icon_Device_Pre2_128.png</file>
+    <file>resources/icons/devices/Icon_Device_Pixi1_128.png</file>
+    <file>resources/icons/buttons/Icon_Box_Arrow.png</file>
+	<file>resources/icons/buttons/Icon_Preware.png</file>
+	<file>resources/icons/buttons/application-x-executable-script.png</file>
+	<file>resources/icons/buttons/document-export.png</file>
+	<file>resources/icons/buttons/document-import.png</file>
+	<file>resources/icons/buttons/folder.png</file>
+	<file>resources/icons/buttons/media-flash.png</file>
+	<file>resources/icons/buttons/network-connect.png</file>
+	<file>resources/icons/buttons/network-disconnect.png</file>
+	<file>resources/icons/buttons/system-software-update.png</file>
+	<file>resources/icons/buttons/utilities-terminal.png</file>
+	<file>resources/icons/buttons/khelpcenter.png</file>
+	<file>resources/icons/buttons/kfm.png</file>
+	<file>resources/icons/buttons/folder_blue.png</file>
+	<file>resources/icons/buttons/file.png</file>
+</qresource>
+</RCC>

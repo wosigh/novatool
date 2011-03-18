@@ -1,0 +1,3 @@
+[submodule "httpunzip"]
+	path = httpunzip
+	url = git://webos-internals.org/python/httpunzip.git
