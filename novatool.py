@@ -163,7 +163,7 @@ class NovacomListDir(Novacom):
     def __init__(self, gui):
         self.gui = gui
         
-    def cmd_stdout_event(self, data):
+    def cmd_stdout(self, data):
         fdata = []
         for line in data[:-1].split('\n'):
             space = line.find(' ')
@@ -199,9 +199,6 @@ class NovacomListDir(Novacom):
             fdata.append((path, size, modes, '%s:%s' % (owner, group)))
         self.gui.fileListModel = RemoteFileModel(fdata, self.gui.fileListHeader, self.gui)
         self.gui.fileList.setModel(self.gui.fileListModel)
-        
-    def cmd_stderr_event(self, data):
-        print data
             
 
 class NovacomInstallIPKG(Novacom):
@@ -412,7 +409,7 @@ class TypeSoortDelegate(QStyledItemDelegate):
     def paint(self, painter, option, index):
         model = self.parent.getModel()
         offset = option.rect.height() / 2 - 8
-        if model.arraydata[index.row()][2][0] == 'd':
+        if model.arraydata[index.row()] and model.arraydata[index.row()][2][0] == 'd':
             painter.drawPixmap(option.rect.x()+4,option.rect.y()+offset,QPixmap(':/resources/icons/buttons/folder_blue.png'))
         else:
             painter.drawPixmap(option.rect.x()+4,option.rect.y()+offset,QPixmap(':/resources/icons/buttons/file.png'))
