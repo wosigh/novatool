@@ -631,16 +631,6 @@ class MainWindow(QMainWindow):
         #QObject.connect(self.termButton, SIGNAL('clicked()'), self.runCommand)
         self.buttons.addWidget(self.termButton)
         
-        self.fb = QToolButton()
-        self.fb.setFixedWidth(96)
-        self.fb.setIcon(QIcon(':/resources/icons/buttons/kfm.png'))
-        self.fb.setText('File\nBrowser')
-        self.fb.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        self.fb.setIconSize(QSize(48,48))
-        self.fb.setStyleSheet("padding-bottom: 8")
-        QObject.connect(self.fb, SIGNAL('clicked()'), self.listDir)
-        self.buttons.addWidget(self.fb)
-        
         self.FbuttonsW = QWidget()
         self.FbuttonsW.setLayout(self.Fbuttons)
         
@@ -789,8 +779,8 @@ class MainWindow(QMainWindow):
     def getFile(self):
         port = self.getActivePort()
         if port:
-            filename, ok = QInputDialog.getText(self, 'Get file', 'Path to file:')
-            if ok:
+            filename = FileDlg(port, self).pickFile()
+            if filename:
                 c = ClientCreator(reactor, NovacomGet, self)
                 d = c.connectTCP('localhost', port)
                 d.addCallback(cmd_getFile, str(filename))
@@ -826,13 +816,6 @@ class MainWindow(QMainWindow):
         if port:
             dialog = RunDlg(port, self)
             dialog.show()
-
-    def listDir(self):
-        port = self.getActivePort()
-        if port:
-            file = FileDlg(port, self).pickFile()
-            print file
-            
         
     def installIPKG(self):
         port = self.getActivePort()
