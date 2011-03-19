@@ -444,8 +444,8 @@ class fileListEvent(QObject):
             if self.parent.fileListModel.arraydata[idx][2][0] == 'd':
                 self.parent.listDir()
             else:
-                print 'file selected: %s' % (self.parent.path)
-            return True
+                self.parent.setResult(True)
+                self.parent.done(True)
         return False
   
 class FileDlg(QDialog):
@@ -493,6 +493,12 @@ class FileDlg(QDialog):
         
     def getModel(self):
         return self.fileListModel
+    
+    def pickFile(self):
+        if self.exec_():
+            return self.path
+        else:
+            return None
 
 class RunDlg(QDialog):
     
@@ -824,8 +830,9 @@ class MainWindow(QMainWindow):
     def listDir(self):
         port = self.getActivePort()
         if port:
-            dialog = FileDlg(port, self)
-            dialog.show()
+            file = FileDlg(port, self).pickFile()
+            print file
+            
         
     def installIPKG(self):
         port = self.getActivePort()
