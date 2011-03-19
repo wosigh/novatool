@@ -57,14 +57,10 @@ def cmd_memBoot(protocol, file):
 
 def cmd_run(protocol, parse, command):
     if parse:
-        print 'parse'
         args = shlex.split(command)
         for i in range(0,len(args)):
             args[i] = args[i].replace(' ','\\ ').replace('"','\\"')
         command = ' '.join(args)
-    else:
-        print 'no parse'
-    print command
     protocol.transport.write('run file://%s\n' % (command))
     
 def cmd_installIPKG(protocol, file):
@@ -200,7 +196,7 @@ class NovacomListDir(Novacom):
             space = line.find(' ')
             year = line[:space]
             path = line[space:].lstrip()
-            fdata.append((modes, '%s:%s' % (owner, group), size, path))
+            fdata.append((path, size, modes, '%s:%s' % (owner, group)))
         self.gui.fileListModel = RemoteFileModel(fdata, self.gui.fileListHeader, self.gui)
         self.gui.fileList.setModel(self.gui.fileListModel)
         
@@ -415,12 +411,12 @@ class TypeSoortDelegate(QStyledItemDelegate):
 
     def paint(self, painter, option, index):
         model = self.parent.getModel()
-        if model.arraydata[index.row()][0][0] == 'd':
-            #option.font.setWeight(QFont.Bold)
-            painter.drawPixmap(option.rect.x(),option.rect.y()+8,QPixmap(':/resources/icons/buttons/folder_blue.png'))
+        offset = option.rect.height() / 2 - 8
+        if model.arraydata[index.row()][2][0] == 'd':
+            painter.drawPixmap(option.rect.x()+4,option.rect.y()+offset,QPixmap(':/resources/icons/buttons/folder_blue.png'))
         else:
-            painter.drawPixmap(option.rect.x(),option.rect.y()+8,QPixmap(':/resources/icons/buttons/file.png'))
-        option.rect.setX(option.rect.x()+16)
+            painter.drawPixmap(option.rect.x()+4,option.rect.y()+offset,QPixmap(':/resources/icons/buttons/file.png'))
+        option.rect.setX(option.rect.x()+20)
         QStyledItemDelegate.paint(self, painter, option, index)
 
 class fileListEvent(QObject):
@@ -434,18 +430,18 @@ class fileListEvent(QObject):
         if event.type() == QEvent.MouseButtonDblClick:
             idx = self.parent.fileList.selectedIndexes()[0].row()
             if self.parent.path == '/':
-                self.parent.path = '%s%s' % (self.parent.path, self.parent.fileListModel.arraydata[idx][3])
+                self.parent.path = '%s%s' % (self.parent.path, self.parent.fileListModel.arraydata[idx][0])
             else:
-                self.parent.path = '%s/%s' % (self.parent.path, self.parent.fileListModel.arraydata[idx][3])
+                self.parent.path = '%s/%s' % (self.parent.path, self.parent.fileListModel.arraydata[idx][0])
             if self.parent.path != '/':
-                if self.parent.fileListModel.arraydata[idx][3] == '.':
+                if self.parent.fileListModel.arraydata[idx][0] == '.':
                     self.parent.path = self.parent.path[:-2]
-                elif self.parent.fileListModel.arraydata[idx][3] == '..':
+                elif self.parent.fileListModel.arraydata[idx][0] == '..':
                     end = self.parent.path[:self.parent.path.rfind('/')].rfind('/')
                     self.parent.path = self.parent.path[:end]
             if self.parent.path == '' or self.parent.path == '/.':
                 self.parent.path = '/'
-            if self.parent.fileListModel.arraydata[idx][0][0] == 'd':
+            if self.parent.fileListModel.arraydata[idx][2][0] == 'd':
                 self.parent.listDir()
             else:
                 print 'file selected: %s' % (self.parent.path)
@@ -464,8 +460,8 @@ class FileDlg(QDialog):
         self.delegate = TypeSoortDelegate(self)
         
         self.fileList = QTableView()
-        self.fileList.setItemDelegateForColumn(3,self.delegate)
-        self.fileListHeader = ['Mode','Owner/Group','Size','Path']
+        self.fileList.setItemDelegateForColumn(0,self.delegate)
+        self.fileListHeader = ['Path','Size','Mode','Owner/Group']
         self.fileListModel = RemoteFileModel([], self.fileListHeader, self)
         self.fileList.setModel(self.fileListModel)
         self.fileList.setShowGrid(False)

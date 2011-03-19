@@ -18,5 +18,6 @@
 	<file>resources/icons/buttons/kfm.png</file>
 	<file>resources/icons/buttons/folder_blue.png</file>
 	<file>resources/icons/buttons/file.png</file>
+	<file>resources/icons/buttons/txt.png</file>
 </qresource>
 </RCC>
