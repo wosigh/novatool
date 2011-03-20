@@ -19,5 +19,6 @@
 	<file>resources/icons/buttons/folder_blue.png</file>
 	<file>resources/icons/buttons/file.png</file>
 	<file>resources/icons/buttons/txt.png</file>
+	<file>resources/icons/buttons/nuvola_apps_usb.png</file>
 </qresource>
 </RCC>

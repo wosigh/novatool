@@ -3,9 +3,9 @@ from PySide.QtGui import *
 import resources
 
 DEVICE_ICONS = {
-                'castle-linux':':/resources/icons/devices/Icon_Device_Pre1_128.png',
-                'roadrunner-linux':':/resources/icons/devices/Icon_Device_Pre2_128.png',
-                'pixie-linux':':/resources/icons/devices/Icon_Device_Pixi1_128.png',
+                'castle':':/resources/icons/devices/Icon_Device_Pre1_128.png',
+                'roadrunner':':/resources/icons/devices/Icon_Device_Pre2_128.png',
+                'pixie':':/resources/icons/devices/Icon_Device_Pixi1_128.png',
                 }
 
 class deviceEvent(QObject):
@@ -21,6 +21,10 @@ class deviceEvent(QObject):
                 if self.gui.deviceButtons[i] == object:
                     self.gui.deviceButtons[i].setActive(True)
                     self.gui.activeDevice = self.gui.devices[i][1]
+                    if self.gui.devices[i][3].split('-')[1] == 'bootie':
+                        self.gui.bootie.setEnabled(False)
+                    else:
+                        self.gui.bootie.setEnabled(True)
                 else:
                     self.gui.deviceButtons[i].setActive(False)
             return True
@@ -53,9 +57,13 @@ class DeviceButton(QFrame):
         self.setLineWidth(4)
         self.setFixedSize(196,196)
         
+        device = self.device[3].split('-')
+        if device[1] == 'bootie':
+            self.setStyleSheet('background-color: pink;')
+        
         self.layout = QVBoxLayout()
         
-        self.icon = QPixmap(DEVICE_ICONS[self.device[3]])
+        self.icon = QPixmap(DEVICE_ICONS[device[0]])
         self.iconLabel = QLabel()
         self.iconLabel.setPixmap(self.icon)
         self.iconLabel.setAlignment(Qt.AlignCenter)

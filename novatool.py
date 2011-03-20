@@ -100,7 +100,8 @@ class NovacomGet(Novacom):
         if ret == QMessageBox.Save:
             filename = self.file__.split('/')[-1]
             filename = QFileDialog.getSaveFileName(self.gui, 'Save file', filename)
-            if filename:
+            print filename
+            if filename[0]:
                 f = open(str(filename[0]), 'w')
                 f.write(data)
                 f.close()
@@ -153,10 +154,16 @@ class NovacomRun(Novacom):
         self.gui = gui
 
     def cmd_stdout_event(self, data):
-        self.gui.output.append(data)
+        if self.gui:
+            self.gui.output.append(data)
+        else:
+            sys.stdout.write(data)
         
     def cmd_stderr_event(self, data):
-        self.gui.output.append('<font color=red>%s</font>' %(data))
+        if self.gui:
+            self.gui.output.append('<font color=red>%s</font>' %(data))
+        else:
+            sys.stderr.write(data)
         
 class NovacomListDir(Novacom):
 
@@ -289,6 +296,10 @@ class DeviceCollectorClient(DeviceCollector):
                 self.gui.activeDevice = self.devices[0][1]
                 self.gui.deviceButtons[0].setActive(True)
             self.gui.setWidgetsEnabled(True)
+            if self.gui.getActiveMode() == 'bootie':
+                self.gui.bootie.setEnabled(False)
+            else:
+                self.gui.bootie.setEnabled(True)
         else:
             self.gui.setWidgetsEnabled(False)
             self.gui.activeDevice = None
@@ -499,9 +510,10 @@ class FileDlg(QDialog):
 
 class RunDlg(QDialog):
     
-    def __init__(self, port, parent=None):
+    def __init__(self, port, mode, parent=None):
         super(RunDlg, self).__init__(parent)
         self.port = port
+        self.mode = mode
         buttonBox = QDialogButtonBox()
         closeButton = buttonBox.addButton(buttonBox.Close)
         QObject.connect(closeButton, SIGNAL('clicked()'), self.close)
@@ -595,6 +607,16 @@ class MainWindow(QMainWindow):
         self.memBootButton.setStyleSheet("padding-bottom: 8")
         QObject.connect(self.memBootButton, SIGNAL('clicked()'), self.memBoot)
         self.Kbuttons.addWidget(self.memBootButton)
+
+        self.bootie = QToolButton()
+        self.bootie.setFixedWidth(96)
+        self.bootie.setIcon(QIcon(':/resources/icons/buttons/nuvola_apps_usb.png'))
+        self.bootie.setText('Recovery\nMode')
+        self.bootie.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.bootie.setIconSize(QSize(48,48))
+        self.bootie.setStyleSheet("padding-bottom: 8")
+        QObject.connect(self.bootie, SIGNAL('clicked()'), self.bootieRecover)
+        self.Kbuttons.addWidget(self.bootie)
 
         self.kernRescue = QToolButton()
         self.kernRescue.setFixedWidth(96)
@@ -733,6 +755,14 @@ class MainWindow(QMainWindow):
                 break
         return port
 
+    def getActiveMode(self):
+        mode = None
+        for dev in self.devices:
+            if self.activeDevice == dev[1]:
+                mode = dev[3].split('-')[1]
+                break
+        return mode
+
     def save_config(self):
         save_config(self.config_file, self.config)
         
@@ -743,6 +773,7 @@ class MainWindow(QMainWindow):
         self.sendFileButton.setEnabled(bool)
         self.memBootButton.setEnabled(bool)
         self.runCommandButton.setEnabled(bool)
+        self.bootie.setEnabled(bool)
         
     def installDriver(self):
         dl = download_novacom_installer(self.platform, jar, self.tempdir)
@@ -810,9 +841,17 @@ class MainWindow(QMainWindow):
         
     def runCommand(self):
         port = self.getActivePort()
-        if port:
-            dialog = RunDlg(port, self)
+        mode = self.getActiveMode()
+        if port and mode:
+            dialog = RunDlg(port, mode, self)
             dialog.show()
+            
+    def bootieRecover(self):
+        port = self.getActivePort()
+        if port:
+            c = ClientCreator(reactor, NovacomRun, None)
+            d = c.connectTCP('localhost', port)
+            d.addCallback(cmd_run, True, '/sbin/tellbootie recover')
         
     def installIPKG(self):
         port = self.getActivePort()
