@@ -549,6 +549,8 @@ class MainWindow(QMainWindow):
         self.config_file = config_file
         self.config = config
         
+        self.setMinimumWidth(550)
+        
         self.debugProto = None
         
         self.platform = platform
