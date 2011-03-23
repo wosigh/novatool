@@ -100,3 +100,4 @@ class DeviceButton(QFrame):
         else:
             self.gui.config['device_aliases'][self.device[1]] = self.nameLabel.text()
         self.gui.save_config()
+        self.nameLabel.clearFocus()
