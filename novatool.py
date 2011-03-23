@@ -55,6 +55,11 @@ def cmd_memBoot(protocol, file):
     protocol.file__ = file
     protocol.transport.write('boot mem://%s\n')
 
+def cmd_bootie_run(protocol, command):
+    
+    protocol.stdin__ = command
+    protocol.transport.write('run file://\n')
+
 def cmd_run(protocol, parse, command):
     if parse:
         args = shlex.split(command)
@@ -149,21 +154,36 @@ class NovacomSend(Novacom):
             msgBox.exec_()
         
 class NovacomRun(Novacom):
+    
+    stdin__ = None
 
     def __init__(self, gui):
         self.gui = gui
+        
+    def cmd_return(self, ret):
+        self.transport.loseConnection()
 
     def cmd_stdout_event(self, data):
         if self.gui:
-            self.gui.output.append(data)
+            self.gui.output.setText(''.join([self.gui.output.toHtml(),data]))
         else:
             sys.stdout.write(data)
         
     def cmd_stderr_event(self, data):
         if self.gui:
-            self.gui.output.append('<font color=red>%s</font>' %(data))
+            self.gui.output.setText(''.join([self.gui.output.toHtml(),'<font color=red>%s</font>' %(data)]))
         else:
             sys.stderr.write(data)
+            
+    def cmd_status(self, msg):
+        if msg == 'ok 0' and self.stdin__:
+            datalen = len(self.stdin__)
+            self.transport.write(struct.pack('<IIII',self.MAGIC,1,datalen,0)+self.stdin__)
+            self.transport.write(struct.pack('<IIII',self.MAGIC,1,20,2))
+            self.transport.write(struct.pack('<IIIII',0,0,0,0,0))
+            self.transport.write(struct.pack('<IIII',self.MAGIC,1,20,2))
+            self.transport.write(struct.pack('<IIIII',2,0,0,0,0))
+                
         
 class NovacomListDir(Novacom):
 
@@ -296,10 +316,12 @@ class DeviceCollectorClient(DeviceCollector):
                 self.gui.activeDevice = self.devices[0][1]
                 self.gui.deviceButtons[0].setActive(True)
             self.gui.setWidgetsEnabled(True)
-            if self.gui.getActiveMode() == 'bootie':
-                self.gui.bootie.setEnabled(False)
-            else:
-                self.gui.bootie.setEnabled(True)
+            if self.gui.getActiveMode() == 'linux':
+                self.gui.bootie.setIcon(QIcon(':/resources/icons/buttons/nuvola_apps_usb.png'))
+                self.gui.bootie.setText('Recovery\nMode')
+            elif self.gui.getActiveMode() == 'bootie':
+                self.gui.bootie.setIcon(QIcon(':/resources/icons/buttons/restart.png'))
+                self.gui.bootie.setText('Reset')
         else:
             self.gui.setWidgetsEnabled(False)
             self.gui.activeDevice = None
@@ -512,6 +534,7 @@ class RunDlg(QDialog):
     
     def __init__(self, port, mode, parent=None):
         super(RunDlg, self).__init__(parent)
+        self.gui = parent
         self.port = port
         self.mode = mode
         buttonBox = QDialogButtonBox()
@@ -519,6 +542,13 @@ class RunDlg(QDialog):
         QObject.connect(closeButton, SIGNAL('clicked()'), self.close)
         self.output = QTextEdit()
         self.output.setReadOnly(True)
+        font = self.output.font()
+        font.setFamily('Monospace')
+        font.setStyleHint(QFont.TypeWriter)
+        fm = QFontMetrics(font)
+        self.output.setFont(font)
+        self.output.setMinimumWidth(fm.widthChar('X')*80)
+        self.output.setMinimumHeight(fm.widthChar('X')*39)
         cmdlayout = QHBoxLayout()
         cmdLabel = QLabel('Command:')
         self.cmd = QLineEdit()
@@ -538,9 +568,14 @@ class RunDlg(QDialog):
         text = str(self.cmd.text())
         if text:
             self.output.clear()
-            c = ClientCreator(reactor, NovacomRun, self)
-            d = c.connectTCP('localhost', self.port)
-            d.addCallback(cmd_run, True, text)
+            if self.gui.getActiveMode() == 'linux':
+                c = ClientCreator(reactor, NovacomRun, self)
+                d = c.connectTCP('localhost', self.port)
+                d.addCallback(cmd_run, True, text)
+            elif self.gui.getActiveMode() == 'bootie':
+                c = ClientCreator(reactor, NovacomRun, self)
+                d = c.connectTCP('localhost', self.port)
+                d.addCallback(cmd_bootie_run, text)
         
 class MainWindow(QMainWindow):
     def __init__(self, config_file, config, platform, tempdir):
@@ -612,8 +647,12 @@ class MainWindow(QMainWindow):
 
         self.bootie = QToolButton()
         self.bootie.setFixedWidth(96)
-        self.bootie.setIcon(QIcon(':/resources/icons/buttons/nuvola_apps_usb.png'))
-        self.bootie.setText('Recovery\nMode')
+        if self.getActiveMode() == 'linux':
+            self.bootie.setIcon(QIcon(':/resources/icons/buttons/nuvola_apps_usb.png'))
+            self.bootie.setText('Recovery\nMode')
+        elif self.getActiveMode() == 'bootie':
+            self.bootie.setIcon(QIcon(':/resources/icons/buttons/restart.png'))
+            self.bootie.setText('Reset')
         self.bootie.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.bootie.setIconSize(QSize(48,48))
         self.bootie.setStyleSheet("padding-bottom: 8")
@@ -851,9 +890,14 @@ class MainWindow(QMainWindow):
     def bootieRecover(self):
         port = self.getActivePort()
         if port:
-            c = ClientCreator(reactor, NovacomRun, None)
-            d = c.connectTCP('localhost', port)
-            d.addCallback(cmd_run, True, '/sbin/tellbootie recover')
+            if self.getActiveMode() == 'linux':
+                c = ClientCreator(reactor, NovacomRun, None)
+                d = c.connectTCP('localhost', port)
+                d.addCallback(cmd_run, True, '/sbin/tellbootie recover')
+            elif self.getActiveMode() == 'bootie':
+                c = ClientCreator(reactor, NovacomRun, None)
+                d = c.connectTCP('localhost', port)
+                d.addCallback(cmd_bootie_run, 'reset')
         
     def installIPKG(self):
         port = self.getActivePort()
