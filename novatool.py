@@ -868,7 +868,7 @@ class MainWindow(QMainWindow):
             d.addCallback(cmd_installIPKG_URL, PREWARE)
             
     def closeEvent(self, event=None):
-        reactor.stop()
+        sys.exit(reactor.stop())
         
 if __name__ == '__main__':
     

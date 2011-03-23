@@ -34,13 +34,8 @@ from twisted.internet.interfaces import IReactorFDSet
 from twisted.python import log
 from twisted.internet import posixbase
 
-try:
-    from PySide.QtCore import QSocketNotifier, QObject, SIGNAL, QTimer, QCoreApplication
-    from PySide.QtCore import QEventLoop
-except ImportError:
-    from PyQt4.QtCore import QSocketNotifier, QObject, SIGNAL, QTimer, QCoreApplication
-    from PyQt4.QtCore import QEventLoop
-
+from PySide.QtCore import QSocketNotifier, QObject, SIGNAL, QTimer, QCoreApplication
+from PySide.QtCore import QEventLoop
 
 class TwistedSocketNotifier(QObject):
     """

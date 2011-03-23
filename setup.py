@@ -3,9 +3,10 @@ import py2exe
 
 py2exe_options = dict(
     ascii = True,
-    excludes = ['_ssl','pyexpat','bz2'],
-    bundle_files = True,
+    excludes = ['_ssl','pyexpat','bz2','OpenSSL','xml'],
+    includes = ['PySide.QtCore'],
     compressed = True,
+    bundle_files = 3,
     dll_excludes = ['MSVCP90.dll']
 )
 
@@ -17,7 +18,6 @@ setup(
         }
     ],
     options = {'py2exe': py2exe_options},
-    zipfile = None,
     description = 'Cross-platform novacom tool',
     author = 'Webos-Internals',
     maintainer = 'Ryan Hope',
