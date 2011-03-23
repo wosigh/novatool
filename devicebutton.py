@@ -72,7 +72,7 @@ class DeviceButton(QFrame):
         self.nameLabel.installEventFilter(deviceLabelEvent(self.gui))
         self.nameLabel.setReadOnly(True)
         self.nameLabel.setStyleSheet('background: transparent;')
-        self.nameLabel.setFrame(False)
+        #self.nameLabel.setFrame(False)
         self.nameLabel.setAlignment(Qt.AlignCenter)
         if self.gui.config['device_aliases'].has_key(self.device[1]):
             self.nameLabel.setText(self.gui.config['device_aliases'][self.device[1]])
