@@ -165,13 +165,13 @@ class NovacomRun(Novacom):
 
     def cmd_stdout_event(self, data):
         if self.gui:
-            self.gui.output.setText(''.join([self.gui.output.toHtml(),data]))
+            self.gui.output.setText(''.join([self.gui.output.toPlainText(),data]))
         else:
             sys.stdout.write(data)
         
     def cmd_stderr_event(self, data):
         if self.gui:
-            self.gui.output.setText(''.join([self.gui.output.toHtml(),'<font color=red>%s</font>' %(data)]))
+            self.gui.output.setText(''.join([self.gui.output.toPlainText(),data]))
         else:
             sys.stderr.write(data)
             
@@ -585,6 +585,7 @@ class MainWindow(QMainWindow):
         self.config = config
         
         self.setMinimumWidth(550)
+        self.setMinimumHeight(475)
         
         self.debugProto = None
         
