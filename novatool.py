@@ -4,7 +4,7 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 from devicebutton import *
 import qt4reactor
-import sys, tempfile, shutil, subprocess, os, platform, struct, tarfile, shlex, urllib2
+import sys, tempfile, shutil, subprocess, os, platform, struct, tarfile, shlex, urllib2, json
 from systeminfo import *
 from httpunzip import *
 from config import *
@@ -28,6 +28,26 @@ NOVA_WIN64  = 'resources/NovacomInstaller_x64.msi'
 NOVA_MACOSX = 'resources/NovacomInstaller.pkg.tar.gz'
 
 REMOTE_TEMP = '/media/internal/.developer'
+
+def chunk_read(response, chunk_size=8192, report_hook=None):
+    total_size = response.info().getheader('Content-Length').strip()
+    total_size = int(total_size)
+    bytes_so_far = 0
+    data = ''
+
+    while 1:
+        chunk = response.read(chunk_size)
+        bytes_so_far += len(chunk)
+
+        if not chunk:
+            break
+    
+        if report_hook:
+            report_hook(bytes_so_far, chunk_size, total_size)
+        
+        data = ''.join([data,chunk])
+
+    return data
 
 def download_novacom_installer(platform, url, path):
     dl = None
@@ -78,7 +98,8 @@ def cmd_installIPKG(protocol, file):
 def cmd_installIPKG_URL(protocol, url):
     req = urllib2.Request(url)
     f = urllib2.urlopen(req)
-    protocol.data__ = f.read()
+    protocol.gui.state.setText('Step 1: Downloading IPK')
+    protocol.data__ = chunk_read(f, report_hook=protocol.chunk_report)
     f.close()
     protocol.file__ = url.split('/')[-1]
     protocol.transport.write('put file://%s/%s\n' % (REMOTE_TEMP, protocol.file__))
@@ -238,12 +259,24 @@ class NovacomInstallIPKG(Novacom):
         self.gui = gui
         self.port = port
         
+    def chunk_report(self, bytes_so_far, chunk_size, total_size):
+        percent = int( float(bytes_so_far) / total_size * 100 )
+        self.gui.progress.setValue(percent)
+        
     def cmd_stderr_event(self, data):
-        print data
+        resp = json.loads(data[data.find(',')+1:].strip())
+        if resp.has_key('returnValue') and resp['returnValue']:
+            self.gui.state.setText('Stage 2')
+            self.gui.progress.setValue(0)
+        elif resp.has_key('status'):
+            self.gui.state.setText('Stage 2: %s' % (resp['status']))
+            self.gui.progress.setValue(self.gui.progress.value()+20)
+            if resp['status'] == 'SUCCESS' or resp['status'].startswith('FAILED'):
+                self.transport.loseConnection()
+                self.gui.closeButton.setEnabled(True)
     
     def cmd_status(self, msg):
         if msg == 'ok 0' and self.port:
-            print 'upload'
             datalen = len(self.data__)
             written = 0
             while written < datalen:
@@ -259,7 +292,7 @@ class NovacomInstallIPKG(Novacom):
             self.transport.loseConnection()
             c = ClientCreator(reactor, NovacomInstallIPKG, self.gui, None)
             d = c.connectTCP('localhost', self.port)
-            d.addCallback(cmd_run, False, '/usr/bin/luna-send -n 6 luna://com.palm.appinstaller/installNoVerify {\"subscribe\":true,\"target\":\"/media/internal/.developer/%s\",\"uncompressedSize\":0}' % (self.file__))
+            d.addCallback(cmd_run, False, '/usr/bin/luna-send -i luna://com.palm.appinstaller/installNoVerify {\"subscribe\":true,\"target\":\"/media/internal/.developer/%s\",\"uncompressedSize\":0}' % (self.file__))
 
 class NovacomDebugClient(NovacomDebug):
     
@@ -361,43 +394,68 @@ class DebugFactory(ReconnectingClientFactory):
         ReconnectingClientFactory.clientConnectionFailed(self, connector, reason)
         self.gui.updateStatusBar(False, 'Connection to novacomd failed!')
 
+class ProgressDlg(QDialog):
+
+    def __init__(self, port, parent=None):
+        super(ProgressDlg, self).__init__(parent)
+        self.setModal(True)
+        self.setMinimumSize(300,125)
+        self.buttonBox = QDialogButtonBox()
+        self.closeButton = self.buttonBox.addButton(self.buttonBox.Close)
+        self.closeButton.setEnabled(False)
+        QObject.connect(self.closeButton, SIGNAL('clicked()'), self.close)
+        pglayout = QVBoxLayout()
+        self.state = QLabel('Stage 1')
+        self.state.setAlignment(Qt.AlignCenter)
+        self.progress = QProgressBar()
+        pglayout.addWidget(self.state)
+        pglayout.addWidget(self.progress)
+        pglayout.addWidget(self.buttonBox)
+        self.setLayout(pglayout)
+        self.setWindowTitle('Progress')
+        self.open()
+        
 class InstallDlg(QDialog):
     
     def __init__(self, port, parent=None):
         super(InstallDlg, self).__init__(parent)
         self.port = port
-        self.setMinimumWidth(600)
-        buttonBox = QDialogButtonBox()
-        closeButton = buttonBox.addButton(buttonBox.Cancel)
-        installButton = buttonBox.addButton(buttonBox.Ok)
-        installButton.setText('Install')
-        QObject.connect(installButton, SIGNAL('clicked()'), self.install)
-        QObject.connect(closeButton, SIGNAL('clicked()'), self.close)
+        self.path = None
+        self.setModal(True)
+        self.buttonBox = QDialogButtonBox()
+        self.cancelButton = self.buttonBox.addButton(self.buttonBox.Cancel)
+        self.installButton = self.buttonBox.addButton(self.buttonBox.Ok)
+        self.installButton.setText('Install')
+        QObject.connect(self.installButton, SIGNAL('clicked()'), self.install)
+        QObject.connect(self.cancelButton, SIGNAL('clicked()'), self.close)
         cmdlayout = QHBoxLayout()
-        cmdLabel = QLabel('File or URL:')
+        self.cmdLabel = QLabel('File or URL:')
         self.cmd = QLineEdit()
-        dir = QPushButton()
-        dir.setIcon(QIcon(':/resources/icons/buttons/folder.png'))
-        QObject.connect(dir, SIGNAL('clicked()'), self.pickfile)
-        cmdlayout.addWidget(cmdLabel)
+        self.cmd.setMinimumWidth(500)
+        self.dir = QPushButton()
+        self.dir.setIcon(QIcon(':/resources/icons/buttons/folder.png'))
+        QObject.connect(self.dir, SIGNAL('clicked()'), self.pickfile)
+        cmdlayout.addWidget(self.cmdLabel)
         cmdlayout.addWidget(self.cmd)
-        cmdlayout.addWidget(dir)
+        cmdlayout.addWidget(self.dir)
         layout = QVBoxLayout()
         layout.addLayout(cmdlayout)
-        layout.addWidget(buttonBox)
+        layout.addWidget(self.buttonBox)
         self.setLayout(layout)
         self.setWindowTitle("Install IPKG")
+    
+    def pickFile(self):
+        if self.exec_():
+            return self.path
+        else:
+            return None
         
     def install(self):
         text = str(self.cmd.text())
         if text:
-            c = ClientCreator(reactor, NovacomInstallIPKG, self, self.port)
-            d = c.connectTCP('localhost', self.port)
-            if text[:7] == 'http://':
-                d.addCallback(cmd_installIPKG_URL, text)
-            else:
-                d.addCallback(cmd_installIPKG, text)
-        self.close()
+            self.path = text
+            self.setResult(True)
+            self.done(True)
         
     def pickfile(self):
         self.cmd.setText(str(QFileDialog.getOpenFileName(self, caption='IPKG', filter='IPKG (*.ipk)')[0]))
@@ -433,10 +491,10 @@ class RemoteFileModel(QAbstractTableModel):
             return self.headerdata[col]
         return None
     
-class TypeSoortDelegate(QStyledItemDelegate):
+class TypeSortDelegate(QStyledItemDelegate):
     
     def __init__(self, parent=None):
-        super(TypeSoortDelegate, self).__init__(parent)
+        super(TypeSortDelegate, self).__init__(parent)
         self.parent = parent
 
     def paint(self, painter, option, index):
@@ -487,7 +545,7 @@ class FileDlg(QDialog):
         
         self.setMinimumSize(500,400)
         
-        self.delegate = TypeSoortDelegate(self)
+        self.delegate = TypeSortDelegate(self)
         
         self.fileList = QTableView()
         self.fileList.setItemDelegateForColumn(0,self.delegate)
@@ -903,8 +961,14 @@ class MainWindow(QMainWindow):
     def installIPKG(self):
         port = self.getActivePort()
         if port:
-            dialog = InstallDlg(port, self)
-            dialog.show()
+            file = InstallDlg(port, self).pickFile()
+            if file:
+                c = ClientCreator(reactor, NovacomInstallIPKG, ProgressDlg(self), port)
+                d = c.connectTCP('localhost', port)
+                if file[:7] == 'http://':
+                    d.addCallback(cmd_installIPKG_URL, file)
+                else:
+                    d.addCallback(cmd_installIPKG, file)
     
     def installPreware(self):
         port = self.getActivePort()
