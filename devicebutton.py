@@ -95,7 +95,7 @@ class DeviceButton(QFrame):
     def nameLabelChanged(self):
         self.nameLabel.setReadOnly(True)
         if self.nameLabel.text() == self.device[3]:
-            if self.gui.config['device_aliases'][self.device[1]]:
+            if self.gui.config['device_aliases'].has_key(self.device[1]):
                 del self.gui.config['device_aliases'][self.device[1]]
         else:
             self.gui.config['device_aliases'][self.device[1]] = self.nameLabel.text()
