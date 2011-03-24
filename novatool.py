@@ -53,20 +53,6 @@ def chunk_read(response, total_size, chunk_size=8192, report_hook=None):
 
     return data
 
-def ncuz_callback(p, msg):
-    pass
-
-def download_novacom_installer(platform, url, path):
-    dl = None
-    if platform == 'Windows':
-        if is_win64():
-            dl = http_unzip(url, [NOVA_WIN64], path, strip=True, callback=ncuz_callback)
-        else:
-            dl = http_unzip(url, [NOVA_WIN32], path, strip=True, callback=ncuz_callback)
-    elif platform == 'Darwin':
-        dl = http_unzip(url, [NOVA_MACOSX], path, strip=True, callback=ncuz_callback)
-    return dl[0]
-
 def cmd_getFile(protocol, file):
     
     protocol.file__ = file
@@ -98,7 +84,7 @@ def cmd_run(protocol, parse, command):
 def cmd_installIPKG(protocol, file):
     f = open(file,'r')
     total_size = os.stat(file).st_size
-    protocol.gui.state.setText('Stage 1: Loading IPK')
+    protocol.gui.update_progress(0, 'Stage 1: Loading IPK')
     protocol.data__ = chunk_read(f, total_size, report_hook=protocol.chunk_report)
     f.close()
     protocol.file__ = file.split('/')[-1]
@@ -108,7 +94,7 @@ def cmd_installIPKG_URL(protocol, url):
     req = urllib2.Request(url)
     f = urllib2.urlopen(req)
     total_size = int(f.info().getheader('Content-Length').strip())
-    protocol.gui.state.setText('Stage 1: Downloading IPK')
+    protocol.gui.update_progress(0, 'Stage 1: Downloading IPK')
     protocol.data__ = chunk_read(f, total_size, report_hook=protocol.chunk_report)
     f.close()
     protocol.file__ = url.split('/')[-1]
@@ -276,11 +262,9 @@ class NovacomInstallIPKG(Novacom):
     def cmd_stderr_event(self, data):
         resp = json.loads(data[data.find(',')+1:].strip())
         if resp.has_key('returnValue') and resp['returnValue']:
-            self.gui.state.setText('Stage 2')
-            self.gui.progress.setValue(0)
+            self.gui.update_progress(0, 'Stage 2')
         elif resp.has_key('status'):
-            self.gui.state.setText('Stage 2: %s' % (resp['status']))
-            self.gui.progress.setValue(self.gui.progress.value()+20)
+            self.gui.update_progress(self.gui.progress.value()+20, 'Stage 2: %s' % (resp['status']))
             if resp['status'] == 'SUCCESS' or resp['status'].startswith('FAILED'):
                 self.transport.loseConnection()
                 self.gui.closeButton.setEnabled(True)
@@ -406,7 +390,7 @@ class DebugFactory(ReconnectingClientFactory):
 
 class ProgressDlg(QDialog):
 
-    def __init__(self, port, parent=None):
+    def __init__(self, port, parent=None, imsg=''):
         super(ProgressDlg, self).__init__(parent)
         self.setModal(True)
         self.setMinimumSize(300,125)
@@ -415,7 +399,7 @@ class ProgressDlg(QDialog):
         self.closeButton.setEnabled(False)
         QObject.connect(self.closeButton, SIGNAL('clicked()'), self.close)
         pglayout = QVBoxLayout()
-        self.state = QLabel('Stage 1')
+        self.state = QLabel(imsg)
         self.state.setAlignment(Qt.AlignCenter)
         self.progress = QProgressBar()
         pglayout.addWidget(self.state)
@@ -424,6 +408,11 @@ class ProgressDlg(QDialog):
         self.setLayout(pglayout)
         self.setWindowTitle('Progress')
         self.open()
+        
+    def update_progress(self, p, msg):
+        print '%d %s' % (p, msg)
+        self.state.setText(msg)
+        self.progress.setValue(p)
         
 class InstallDlg(QDialog):
     
@@ -872,6 +861,18 @@ class MainWindow(QMainWindow):
         
         self.show()
         
+    def download_novacom_installer(self, platform, url, path):
+        dl = None
+        dlg = ProgressDlg(self, imsg='Preparing to download/install novacom...')
+        if platform == 'Windows':
+            if is_win64():
+                dl = http_unzip(url, [NOVA_WIN64], path, strip=True, callback=dlg.update_progress)
+            else:
+                dl = http_unzip(url, [NOVA_WIN32], path, strip=True, callback=dlg.update_progress)
+        elif platform == 'Darwin':
+            dl = http_unzip(url, [NOVA_MACOSX], path, strip=True, callback=dlg.update_progress)
+        return dl[0]
+        
     def getActivePort(self):
         port = None
         for dev in self.devices:
@@ -901,7 +902,7 @@ class MainWindow(QMainWindow):
         self.bootie.setEnabled(bool)
         
     def installDriver(self):
-        dl = download_novacom_installer(self.platform, jar, self.tempdir)
+        dl = self.download_novacom_installer(self.platform, jar, self.tempdir)
         if dl:
             if self.platform == 'Darwin':
                 tf = tarfile.open(dl)
@@ -988,7 +989,7 @@ class MainWindow(QMainWindow):
         if port:
             file = InstallDlg(port, self).pickFile()
             if file:
-                c = ClientCreator(reactor, NovacomInstallIPKG, ProgressDlg(self), port)
+                c = ClientCreator(reactor, NovacomInstallIPKG, ProgressDlg(self, imsg='Preparing to install IPK...'), port)
                 d = c.connectTCP('localhost', port)
                 if file[:7] == 'http://':
                     d.addCallback(cmd_installIPKG_URL, file)
@@ -999,7 +1000,7 @@ class MainWindow(QMainWindow):
         port = self.getActivePort()
         if port:
             print 'Install preware'
-            c = ClientCreator(reactor, NovacomInstallIPKG, ProgressDlg(self), port)
+            c = ClientCreator(reactor, NovacomInstallIPKG, ProgressDlg(self, imsg='Preparing to install IPK...'), port)
             d = c.connectTCP('localhost', port)
             d.addCallback(cmd_installIPKG_URL, PREWARE)
             
