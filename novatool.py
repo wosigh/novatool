@@ -60,11 +60,11 @@ def download_novacom_installer(platform, url, path):
     dl = None
     if platform == 'Windows':
         if is_win64():
-            dl = http_unzip(url, [NOVA_WIN64], path, strip=True, ncuz_callback)
+            dl = http_unzip(url, [NOVA_WIN64], path, strip=True, callback=ncuz_callback)
         else:
-            dl = http_unzip(url, [NOVA_WIN32], path, strip=True, ncuz_callback)
+            dl = http_unzip(url, [NOVA_WIN32], path, strip=True, callback=ncuz_callback)
     elif platform == 'Darwin':
-        dl = http_unzip(url, [NOVA_MACOSX], path, strip=True, ncuz_callback)
+        dl = http_unzip(url, [NOVA_MACOSX], path, strip=True, callback=ncuz_callback)
     return dl[0]
 
 def cmd_getFile(protocol, file):
