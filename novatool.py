@@ -861,9 +861,8 @@ class MainWindow(QMainWindow):
         
         self.show()
         
-    def download_novacom_installer(self, platform, url, path):
+    def download_novacom_installer(self, dlg, platform, url, path):
         dl = None
-        dlg = ProgressDlg(self, imsg='Preparing to download/install novacom...')
         if platform == 'Windows':
             if is_win64():
                 dl = http_unzip(url, [NOVA_WIN64], path, strip=True, callback=dlg.update_progress)
@@ -902,7 +901,9 @@ class MainWindow(QMainWindow):
         self.bootie.setEnabled(bool)
         
     def installDriver(self):
-        dl = self.download_novacom_installer(self.platform, jar, self.tempdir)
+        dlg = ProgressDlg(self, imsg='Preparing to download/install novacom...')
+        dl = self.download_novacom_installer(dlg, self.platform, jar, self.tempdir)
+        dlg.close()
         if dl:
             if self.platform == 'Darwin':
                 tf = tarfile.open(dl)
