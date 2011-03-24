@@ -4,10 +4,13 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 from devicebutton import *
 import qt4reactor
-import sys, tempfile, shutil, subprocess, os, platform, struct, tarfile, shlex, urllib2, json
+import sys, tempfile, shutil, subprocess, os, platform, struct, tarfile, shlex
+import locale, gettext, urllib2, json
 from systeminfo import *
 from httpunzip import *
 from config import *
+
+APP_NAME = 'novatool'
 
 app = QApplication(sys.argv)
 qt4reactor.install()
@@ -639,6 +642,21 @@ class RunDlg(QDialog):
 class MainWindow(QMainWindow):
     def __init__(self, config_file, config, platform, tempdir):
         super(MainWindow, self).__init__()
+
+        self.local_path = os.path.realpath(os.path.dirname(sys.argv[0]))
+        langs = []
+        lc, encoding = locale.getdefaultlocale()
+        if (lc):
+            langs = [lc]
+        language = os.environ.get('LANGUAGE', None)
+        if (language):
+            langs += language.split(":")
+        langs += ['it','de_CH','en_US']
+        gettext.bindtextdomain(APP_NAME, self.local_path)
+        gettext.textdomain(APP_NAME)
+        self.lang = gettext.translation(APP_NAME, self.local_path
+                                        , languages=langs, fallback = True)
+        _ = self.lang.gettext
         
         self.config_file = config_file
         self.config = config
@@ -667,7 +685,7 @@ class MainWindow(QMainWindow):
         self.main = QHBoxLayout()
         self.tabs = QTabWidget()
         
-        self.deviceBox = QGroupBox(self.trUtf8('Devices'))
+        self.deviceBox = QGroupBox(_('Devices'))
         self.deviceBoxLayout = QHBoxLayout()
         self.deviceBox.setLayout(self.deviceBoxLayout)
                        
