@@ -994,7 +994,7 @@ if __name__ == '__main__':
         appdata = os.environ.get('XDG_CONFIG_HOME', os.path.join(_home, '.config'))
     novatool_config_home = os.path.join(appdata, 'novatool')    
     if not os.path.exists(novatool_config_home):
-        os.mkdirs(novatool_config_home)        
+        os.makedirs(novatool_config_home)        
     config_file = os.path.join(novatool_config_home,"config")
     config = load_config(config_file)
     
