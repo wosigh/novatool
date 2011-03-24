@@ -29,9 +29,7 @@ NOVA_MACOSX = 'resources/NovacomInstaller.pkg.tar.gz'
 
 REMOTE_TEMP = '/media/internal/.developer'
 
-def chunk_read(response, chunk_size=8192, report_hook=None):
-    total_size = response.info().getheader('Content-Length').strip()
-    total_size = int(total_size)
+def chunk_read(response, total_size, chunk_size=8192, report_hook=None):
     bytes_so_far = 0
     data = ''
 
@@ -90,8 +88,9 @@ def cmd_run(protocol, parse, command):
     
 def cmd_installIPKG(protocol, file):
     f = open(file,'r')
+    total_size = os.stat(file).st_size
     protocol.gui.state.setText('Stage 1: Loading IPK')
-    protocol.data__ = f.read()
+    protocol.data__ = chunk_read(f, total_size, report_hook=protocol.chunk_report)
     f.close()
     protocol.file__ = file.split('/')[-1]
     protocol.transport.write('put file://%s/%s\n' % (REMOTE_TEMP, protocol.file__))
@@ -99,8 +98,9 @@ def cmd_installIPKG(protocol, file):
 def cmd_installIPKG_URL(protocol, url):
     req = urllib2.Request(url)
     f = urllib2.urlopen(req)
+    total_size = int(f.info().getheader('Content-Length').strip())
     protocol.gui.state.setText('Stage 1: Downloading IPK')
-    protocol.data__ = chunk_read(f, report_hook=protocol.chunk_report)
+    protocol.data__ = chunk_read(f, total_size, report_hook=protocol.chunk_report)
     f.close()
     protocol.file__ = url.split('/')[-1]
     protocol.transport.write('put file://%s/%s\n' % (REMOTE_TEMP, protocol.file__))
