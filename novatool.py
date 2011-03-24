@@ -667,7 +667,7 @@ class MainWindow(QMainWindow):
         self.main = QHBoxLayout()
         self.tabs = QTabWidget()
         
-        self.deviceBox = QGroupBox('Devices')
+        self.deviceBox = QGroupBox(self.trUtf8('Devices'))
         self.deviceBoxLayout = QHBoxLayout()
         self.deviceBox.setLayout(self.deviceBoxLayout)
                        
