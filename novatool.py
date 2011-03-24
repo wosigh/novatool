@@ -90,6 +90,7 @@ def cmd_run(protocol, parse, command):
     
 def cmd_installIPKG(protocol, file):
     f = open(file,'r')
+    protocol.gui.state.setText('Stage 1: Loading IPK')
     protocol.data__ = f.read()
     f.close()
     protocol.file__ = file.split('/')[-1]
@@ -98,7 +99,7 @@ def cmd_installIPKG(protocol, file):
 def cmd_installIPKG_URL(protocol, url):
     req = urllib2.Request(url)
     f = urllib2.urlopen(req)
-    protocol.gui.state.setText('Step 1: Downloading IPK')
+    protocol.gui.state.setText('Stage 1: Downloading IPK')
     protocol.data__ = chunk_read(f, report_hook=protocol.chunk_report)
     f.close()
     protocol.file__ = url.split('/')[-1]
