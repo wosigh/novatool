@@ -21,7 +21,7 @@ import resources
 
 jar = 'http://palm.cdnetworks.net/rom/pre2/p210sfr03082011/wrep210rod/webosdoctorp103ueuna-wr.jar'
 
-PREWARE = 'http://ipkg.preware.org/feeds/webos-internals/testing/armv6/org.webosinternals.preware_1.5.7_arm.ipk'
+PREWARE = 'http://get.preware.org/org.webosinternals.preware.ipk'
        
 NOVA_WIN32  = 'resources/NovacomInstaller_x86.msi'
 NOVA_WIN64  = 'resources/NovacomInstaller_x64.msi'
