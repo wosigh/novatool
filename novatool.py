@@ -30,6 +30,9 @@ NOVA_WIN32  = 'resources/NovacomInstaller_x86.msi'
 NOVA_WIN64  = 'resources/NovacomInstaller_x64.msi'
 NOVA_MACOSX = 'resources/NovacomInstaller.pkg.tar.gz'
 
+NOVA_LINUX32 = 'https://cdn.downloads.palm.com/sdkdownloads/2.1.0.519/sdkBinaries/palm-novacom_1.0.64_i386.deb'
+NOVA_LINUX64 = 'https://cdn.downloads.palm.com/sdkdownloads/2.1.0.519/sdkBinaries/palm-novacom_1.0.64_amd64.deb'
+
 REMOTE_TEMP = '/media/internal/.developer'
 
 def chunk_read(response, total_size, chunk_size=8192, report_hook=None):
@@ -50,15 +53,18 @@ def chunk_read(response, total_size, chunk_size=8192, report_hook=None):
 
     return data
 
+def ncuz_callback(p, msg):
+    pass
+
 def download_novacom_installer(platform, url, path):
     dl = None
     if platform == 'Windows':
         if is_win64():
-            dl = http_unzip(url, [NOVA_WIN64], path, strip=True)
+            dl = http_unzip(url, [NOVA_WIN64], path, strip=True, ncuz_callback)
         else:
-            dl = http_unzip(url, [NOVA_WIN32], path, strip=True)
+            dl = http_unzip(url, [NOVA_WIN32], path, strip=True, ncuz_callback)
     elif platform == 'Darwin':
-        dl = http_unzip(url, [NOVA_MACOSX], path, strip=True)
+        dl = http_unzip(url, [NOVA_MACOSX], path, strip=True, ncuz_callback)
     return dl[0]
 
 def cmd_getFile(protocol, file):
