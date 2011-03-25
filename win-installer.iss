@@ -25,6 +25,7 @@ AllowNoIcons=yes
 OutputBaseFilename=NovatoolSetup
 Compression=lzma
 SolidCompression=yes
+OutputDir="Z:\home\ryan\workspace\novatool\dist\windows"
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

@@ -1,10 +1,23 @@
+help:
+	@echo "Valid options are: macosx windows linux"
 
 all: clean macosx windows linux
 
 clean:
-	@rm -rf build dist
+	@rm -rf build
+
+distclean:
+	@rm -rf dist
 
 windows:
+	wine ~/.wine/drive_c/Python26/python.exe setup-cx.py build
+	cp ~/.wine/drive_c/Python26/DLLs/python26.dll build/exe.win32-2.6/
+	cp ~/.wine/drive_c/Python26/Lib/site-packages/PySide/QtCore4.dll build/exe.win32-2.6/
+	cp ~/.wine/drive_c/Python26/Lib/site-packages/PySide/QtGui4.dll build/exe.win32-2.6/
+	cp ~/.wine/drive_c/Python26/Lib/site-packages/PySide/pyside-python2.6.dll build/exe.win32-2.6/
+	cp ~/.wine/drive_c/Python26/Lib/site-packages/PySide/shiboken-python2.6.dll build/exe.win32-2.6/
+	mkdir -p dist/windows
+	wine ~/.wine/drive_c/Program\ Files\ \(x86\)/Inno\ Setup\ 5/ISCC.exe win-installer.iss
 
 linux:
 
@@ -69,4 +82,5 @@ macosx:
 	zip -u dist/macosx/novatool.app/Contents/MacOS/library.zip _scproxy.pyc _md5.pyc _sha.pyc _sha256.pyc _sha512.pyc
 	cd dist/macosx; \
 	mv novatool.app Novatool.app; \
-	hdiutil create -srcfolder Novatool.app -volname Novatool -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDZO -imagekey zlib-level=9 Novatool.dmg
+	hdiutil create -srcfolder Novatool.app -volname Novatool -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDZO -imagekey zlib-level=9 Novatool.dmg; \
+	rm -rf Novatool.app
