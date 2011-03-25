@@ -5,6 +5,8 @@ from PySide.QtGui import *
 from devicebutton import *
 import qt4reactor
 import sys, tempfile, shutil, subprocess, os, platform, struct, tarfile, shlex
+if sys.platform == 'darwin': import _scproxy
+
 import locale, gettext, urllib2, json
 from systeminfo import *
 from httpunzip import *

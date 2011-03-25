@@ -5,10 +5,12 @@ includes = []
 excludes = ['ssl','OpenSSL','xml']
 packages = []
 path = []
+icon = None
 
 base = None
 if sys.platform == 'win32':
 	base = 'Win32GUI'
+	icon = 'novacomInstaller.ico'
 
 Novatool = Executable(
 	script = 'novatool.py',
@@ -17,7 +19,7 @@ Novatool = Executable(
 	copyDependentFiles = True,
 	appendScriptToExe = False,
 	appendScriptToLibrary = False,
-	icon = 'novacomInstaller.ico'
+	icon = icon,
 	)
 
 setup(
