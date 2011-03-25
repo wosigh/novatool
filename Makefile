@@ -10,6 +10,7 @@ distclean:
 	@rm -rf dist
 
 windows:
+	rm -rf dist/windows
 	wine ~/.wine/drive_c/Python26/python.exe setup-cx.py build
 	cp ~/.wine/drive_c/Python26/DLLs/python26.dll build/exe.win32-2.6/
 	cp ~/.wine/drive_c/Python26/Lib/site-packages/PySide/QtCore4.dll build/exe.win32-2.6/
@@ -22,6 +23,7 @@ windows:
 linux:
 
 macosx:
+	rm -rf dist/macosx
 	/opt/local/bin/python2.6 setup-cx.py build
 	mkdir -p dist/macosx/novatool.app/Contents
 	mkdir dist/macosx/novatool.app/Contents/MacOS
@@ -29,11 +31,11 @@ macosx:
 	cp novacomInstaller.icns dist/macosx/novatool.app/Contents/Resources
 	cp Info.plist dist/macosx/novatool.app/Contents/
 	echo "APPL????" > dist/macosx/novatool.app/Contents/PkgInfo
-	mv build/exe.macosx-10.6-x86_64-2.6/novatool dist/macosx/novatool.app/Contents/MacOS/
-	mv build/exe.macosx-10.6-x86_64-2.6/*.dylib dist/macosx/novatool.app/Contents/MacOS/
-	mv build/exe.macosx-10.6-x86_64-2.6/PySide* dist/macosx/novatool.app/Contents/MacOS/
-	mv build/exe.macosx-10.6-x86_64-2.6/*.zip dist/macosx/novatool.app/Contents/MacOS/
-	morelibs=`ls build/exe.macosx-10.6-x86_64-2.6`
+	mv build/exe.macosx-10.6-*-2.6/novatool dist/macosx/novatool.app/Contents/MacOS/
+	mv build/exe.macosx-10.6-*-2.6/*.dylib dist/macosx/novatool.app/Contents/MacOS/
+	mv build/exe.macosx-10.6-*-2.6/PySide* dist/macosx/novatool.app/Contents/MacOS/
+	mv build/exe.macosx-10.6-*-2.6/*.zip dist/macosx/novatool.app/Contents/MacOS/
+	morelibs=`ls build/exe.macosx-10.6-*-2.6`
 	/opt/local/bin/macdeployqt dist/macosx/novatool.app
 	cd dist/macosx/novatool.app/Contents/Frameworks; \
 	rm -rf QtDeclarative.framework; \
@@ -68,7 +70,7 @@ macosx:
   			done; \
  		fi; \
 	done
-	mv build/exe.macosx-10.6-x86_64-2.6/* dist/macosx/novatool.app/Contents/MacOS/
+	mv build/exe.macosx-10.6-*-2.6/* dist/macosx/novatool.app/Contents/MacOS/
 	cd dist/macosx/novatool.app/Contents/MacOS; \
 	for f in $$morelibs; do \
 		libs=`otool -XL $$f | grep "/opt/local/lib" | cut -f 2 | cut -f 1 -d " "`; \
@@ -80,7 +82,8 @@ macosx:
  		fi; \
 	done
 	zip -u dist/macosx/novatool.app/Contents/MacOS/library.zip _scproxy.pyc _md5.pyc _sha.pyc _sha256.pyc _sha512.pyc
-	cd dist/macosx; \
-	mv novatool.app Novatool.app; \
-	hdiutil create -srcfolder Novatool.app -volname Novatool -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDZO -imagekey zlib-level=9 Novatool.dmg; \
-	rm -rf Novatool.app
+	mv dist/macosx/novatool.app dist/macosx/Novatool.app
+	sh create-dmg/create-dmg --window-pos 400 400 --window-size 384 224 --volname Novatool dist/macosx/Novatool.dmg dist/macosx/Novatool.app
+	rm -rf dist/macosx/Novatool.app
+	#hdiutil create -srcfolder Novatool.app -volname Novatool -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDZO -imagekey zlib-level=9 Novatool.dmg; \
+	#rm -rf Novatool.app

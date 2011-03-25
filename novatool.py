@@ -1059,12 +1059,15 @@ if __name__ == '__main__':
     
     tempdir = path = tempfile.mkdtemp()
     
+    _home = os.environ.get('HOME', '/')
     if platform.system() == 'Windows':
-        appdata = os.environ['APPDATA']
+        novatool_config_home = os.path.join(os.environ['APPDATA'], 'Novatool')
+    elif platform.system() == 'Linux':
+        novatool_config_home = os.path.join(os.environ.get('XDG_CONFIG_HOME', os.path.join(_home, '.config')), 'novatool')
+    elif platform.system() == 'Darwin':
+        novatool_config_home = os.path.join(_home, 'Library', 'Application Support', 'Novatool')
     else:
-        _home = os.environ.get('HOME', '/')
-        appdata = os.environ.get('XDG_CONFIG_HOME', os.path.join(_home, '.config'))
-    novatool_config_home = os.path.join(appdata, 'novatool')    
+        novatool_config_home = os.path.join(_home, '.novatool')
     if not os.path.exists(novatool_config_home):
         os.makedirs(novatool_config_home)        
     config_file = os.path.join(novatool_config_home,"config")
