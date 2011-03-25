@@ -25,7 +25,7 @@ AllowNoIcons=yes
 OutputBaseFilename=NovatoolSetup
 Compression=lzma
 SolidCompression=yes
-OutputDir="Z:\home\ryan\workspace\novatool\dist\windows"
+OutputDir="dist\windows"
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -35,32 +35,32 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 0,6.1
 
 [Files]
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\novatool.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\_ctypes.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\_hashlib.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\_socket.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\_ssl.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\bz2.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\library.zip"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\novatool.zip"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\PySide.QtCore.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\PySide.QtGui.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\pywintypes26.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\python26.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\pyside-python2.6.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\QtCore4.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\QtGui4.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\select.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\shiboken-python2.6.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\twisted.python._initgroups.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\unicodedata.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\win32api.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\win32event.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\win32file.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\win32pipe.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\win32process.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\win32security.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Z:\home\ryan\workspace\novatool\build\exe.win32-2.6\zope.interface._zope_interface_coptimizations.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\novatool.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\_ctypes.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\_hashlib.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\_socket.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\_ssl.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\bz2.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\library.zip"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\novatool.zip"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\PySide.QtCore.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\PySide.QtGui.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\pywintypes26.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\python26.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\pyside-python2.6.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\QtCore4.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\QtGui4.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\select.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\shiboken-python2.6.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\twisted.python._initgroups.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\unicodedata.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\win32api.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\win32event.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\win32file.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\win32pipe.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\win32process.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\win32security.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\zope.interface._zope_interface_coptimizations.pyd"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
