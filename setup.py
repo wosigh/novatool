@@ -23,6 +23,7 @@ setup(name = 'novatool',
                     'qt4reactor',
                     'resources',
                     'systeminfo',
+                    'config',
                     'httpunzip/__init__'],
       data_files = ['build-info'],
       )
