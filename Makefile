@@ -3,7 +3,7 @@
 help:
 	@echo "Valid options are: macosx windows linux"
 
-all: clean macosx windows linux
+all: clean sdist macosx windows linux
 
 clean:
 	@rm -rf build
@@ -16,8 +16,13 @@ resources:
 	
 build-info:
 	@git describe --dirty --always > build-info
+	
+deps: build-info resources
+	
+sdist: deps
+	@python setup.py sdist
 
-windows: build-info resources
+windows: deps
 	rm -rf dist/windows
 	wine ~/.wine/drive_c/Python26/python.exe setup-cx.py build
 	cp ~/.wine/drive_c/Python26/DLLs/python26.dll build/exe.win32-2.6/
@@ -29,9 +34,9 @@ windows: build-info resources
 	wine ~/.wine/drive_c/Program\ Files\ \(x86\)/Inno\ Setup\ 5/ISCC.exe win-installer.iss
 	mv dist/windows/NovatoolSetup.exe dist/windows/NovatoolSetup-`cat build-info`.exe
 
-linux: build-info resources
+linux: deps
 
-macosx: build-info resources
+macosx: deps
 	rm -rf dist/macosx
 	/opt/local/bin/python2.6 setup-cx.py build
 	mkdir -p dist/macosx/novatool.app/Contents

@@ -5,3 +5,5 @@
 dist
 build
 build-info
+MANIFEST
+resources.py
