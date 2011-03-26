@@ -1,4 +1,4 @@
-.PHONY: build-info
+.PHONY: build-info resources
 
 help:
 	@echo "Valid options are: macosx windows linux"
@@ -11,10 +11,13 @@ clean:
 distclean:
 	@rm -rf dist build-info
 	
+resources:
+	@pyside-rcc resources.qrc > resources.py
+	
 build-info:
 	@git describe --dirty --always > build-info
 
-windows: build-info
+windows: build-info resources
 	rm -rf dist/windows
 	wine ~/.wine/drive_c/Python26/python.exe setup-cx.py build
 	cp ~/.wine/drive_c/Python26/DLLs/python26.dll build/exe.win32-2.6/
@@ -26,9 +29,9 @@ windows: build-info
 	wine ~/.wine/drive_c/Program\ Files\ \(x86\)/Inno\ Setup\ 5/ISCC.exe win-installer.iss
 	mv dist/windows/NovatoolSetup.exe dist/windows/NovatoolSetup-`cat build-info`.exe
 
-linux: build-info
+linux: build-info resources
 
-macosx: build-info
+macosx: build-info resources
 	rm -rf dist/macosx
 	/opt/local/bin/python2.6 setup-cx.py build
 	mkdir -p dist/macosx/novatool.app/Contents

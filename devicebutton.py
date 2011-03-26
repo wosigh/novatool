@@ -6,6 +6,10 @@ DEVICE_ICONS = {
                 'castle':':/resources/icons/devices/Icon_Device_Pre1_128.png',
                 'roadrunner':':/resources/icons/devices/Icon_Device_Pre2_128.png',
                 'pixie':':/resources/icons/devices/Icon_Device_Pixi1_128.png',
+                'topaz':':/resources/icons/devices/Icon_Device_TouchPad_128.png',
+                'broadway':':/resources/icons/devices/Icon_Device_Veer_128.png',
+                'mantaray':':/resources/icons/devices/Icon_Device_Pre3_128.png',
+                'emulator':':/resources/icons/devices/Icon_Emulator_128.png',
                 }
 
 class deviceEvent(QObject):
@@ -20,8 +24,8 @@ class deviceEvent(QObject):
             for i in range(0, len(self.gui.deviceButtons)):
                 if self.gui.deviceButtons[i] == object:
                     self.gui.deviceButtons[i].setActive(True)
-                    self.gui.activeDevice = self.gui.devices[i][1]
-                    if self.gui.devices[i][3].split('-')[1] == 'bootie':
+                    device = self.device[3].split('-')
+                    if len(device) == 2 and device[1] == 'bootie':
                         self.gui.bootie.setEnabled(False)
                     else:
                         self.gui.bootie.setEnabled(True)
@@ -58,7 +62,7 @@ class DeviceButton(QFrame):
         self.setFixedSize(196,196)
         
         device = self.device[3].split('-')
-        if device[1] == 'bootie':
+        if len(device) == 2 and device[1] == 'bootie':
             self.setStyleSheet('background-color: pink;')
         
         self.layout = QVBoxLayout()

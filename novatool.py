@@ -702,7 +702,7 @@ class MainWindow(QMainWindow):
         
         try:
             self.githash = subprocess.Popen(['git','describe','--dirty','--always'], stdout=subprocess.PIPE).communicate()[0][:-1]
-        except WindowsError:
+        except WindowsError, OSError:
             self.githash = None
             
         if not self.githash:
@@ -974,8 +974,10 @@ class MainWindow(QMainWindow):
         mode = None
         for dev in self.devices:
             if self.activeDevice == dev[1]:
-                mode = dev[3].split('-')[1]
-                break
+                device = dev[3].split('-')
+                if len(device):
+                    mode = device[1]
+                    break
         return mode
 
     def save_config(self):

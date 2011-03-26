@@ -3,6 +3,10 @@
     <file>resources/icons/devices/Icon_Device_Pre1_128.png</file>
     <file>resources/icons/devices/Icon_Device_Pre2_128.png</file>
     <file>resources/icons/devices/Icon_Device_Pixi1_128.png</file>
+    <file>resources/icons/devices/Icon_Device_Veer_128.png</file>
+    <file>resources/icons/devices/Icon_Device_Pre3_128.png</file>
+    <file>resources/icons/devices/Icon_Device_TouchPad_128.png</file>
+    <file>resources/icons/devices/Icon_Emulator_128.png</file>
     <file>resources/icons/buttons/Icon_Box_Arrow.png</file>
 	<file>resources/icons/buttons/Icon_Preware.png</file>
 	<file>resources/icons/buttons/application-x-executable-script.png</file>
