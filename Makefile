@@ -17,11 +17,11 @@ build-info:
 deps: build-info resources
 	
 sdist: deps
-	@python setup.py sdist
+	@python setup/setup.py sdist
 
 windows: deps
 	rm -rf dist/windows
-	wine ~/.wine/drive_c/Python26/python.exe setup-cx.py build
+	wine ~/.wine/drive_c/Python26/python.exe setup/setup-cx.py build
 	cp ~/.wine/drive_c/Python26/DLLs/python26.dll build/exe.win32-2.6/
 	cp ~/.wine/drive_c/Python26/Lib/site-packages/PySide/QtCore4.dll build/exe.win32-2.6/
 	cp ~/.wine/drive_c/Python26/Lib/site-packages/PySide/QtGui4.dll build/exe.win32-2.6/
@@ -35,7 +35,7 @@ linux: deps
 
 macosx: deps
 	rm -rf dist/macosx
-	/opt/local/bin/python2.6 setup-cx.py build
+	/opt/local/bin/python2.6 setup/setup-cx.py build
 	mkdir -p dist/macosx/novatool.app/Contents
 	mkdir dist/macosx/novatool.app/Contents/MacOS
 	mkdir dist/macosx/novatool.app/Contents/Resources
