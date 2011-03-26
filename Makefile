@@ -92,7 +92,9 @@ macosx: deps
   			done; \
  		fi; \
 	done
-	zip -u dist/macosx/novatool.app/Contents/MacOS/library.zip _scproxy.pyc _md5.pyc _sha.pyc _sha256.pyc _sha512.pyc
+	cd extra_mod; \
+	python -m py_compile *.py; \
+	zip -u ../dist/macosx/novatool.app/Contents/MacOS/library.zip _scproxy.pyc _md5.pyc _sha.pyc _sha256.pyc _sha512.pyc
 	mv dist/macosx/novatool.app dist/macosx/Novatool.app
 	sh create-dmg/create-dmg --window-pos 400 400 --window-size 384 224 --volname Novatool dist/macosx/Novatool.dmg dist/macosx/Novatool.app
 	rm -rf dist/macosx/Novatool.app
