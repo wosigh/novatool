@@ -705,9 +705,11 @@ class MainWindow(QMainWindow):
         
         try:
             self.githash = subprocess.Popen(['git','describe','--dirty','--always'], stdout=subprocess.PIPE).communicate()[0][:-1]
-        except WindowsError, OSError:
+        except WindowsError:
             self.githash = None
-            
+        except OSError:
+            self.githash = None
+                
         if not self.githash:
             f = open(os.path.join(self.local_path, 'build-info'), 'r')
             if f:
