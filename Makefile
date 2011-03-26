@@ -9,10 +9,10 @@ clean:
 	@rm -rf build dist build-info resources.py MANIFEST
 	
 resources:
-	pyside-rcc resources.qrc > resources.py
+	@pyside-rcc resources.qrc > resources.py
 	
 build-info:
-	git describe --dirty --always > build-info
+	@git describe --dirty --always > build-info
 	
 deps: build-info resources
 	

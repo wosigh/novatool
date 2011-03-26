@@ -2,18 +2,6 @@
 
 import subprocess, os, sys
 
-env = os.environ
-env['PATH'] = '/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/local/git/bin:/opt/local/bin:/opt/local/sbin'
-subprocess.call(['make','deps'],env=env)
-try:
-    f = open(os.path.join(os.path.realpath(os.path.dirname(sys.argv[0])), 'build-info'), 'r')
-    githash = f.read()
-    f.close()
-except IOError:
-    pass
-if not githash:
-    sys.exit("Must run 'make deps' before running.")
-
 from PySide.QtCore import *
 from PySide.QtGui import *
 from devicebutton import *
@@ -670,6 +658,7 @@ class AboutDlg(QDialog):
     
     def __init__(self, parent=None):
         super(AboutDlg, self).__init__(parent)
+        self.setModal(True)
         buttonBox = QDialogButtonBox()
         closeButton = buttonBox.addButton(buttonBox.Close)
         QObject.connect(closeButton, SIGNAL('clicked()'), self.close)
@@ -884,7 +873,7 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.statusBar)
                 
         self.menuBar = QMenuBar()
-        self.filemenu = QMenu('File')
+        self.filemenu = QMenu('&File')
         if platform.system() == 'Darwin' or platform.system() == 'Windows':
             self.driverInstallAction = QAction(self)
             self.driverInstallAction.setText('Install Novacom Driver')
@@ -892,13 +881,14 @@ class MainWindow(QMainWindow):
             self.filemenu.addAction(self.driverInstallAction)
             self.filemenu.addSeparator()
         self.quitAction = QAction(self)
-        self.quitAction.setText('Quit')
+        self.quitAction.setText('&Quit')
+        self.quitAction.setShortcut(QKeySequence(Qt.CTRL + Qt.Key_Q))
         QObject.connect(self.quitAction, SIGNAL('triggered()'), self.quitApp)
         self.filemenu.addAction(self.quitAction)
         self.menuBar.addMenu(self.filemenu)
-        self.helpmenu = QMenu('Help')
+        self.helpmenu = QMenu('&Help')
         self.aboutAction = QAction(self)
-        self.aboutAction.setText('About')
+        self.aboutAction.setText('&About')
         self.helpmenu.addAction(self.aboutAction)
         QObject.connect(self.aboutAction, SIGNAL('triggered()'), self.showAbout)
         self.menuBar.addMenu(self.helpmenu)
@@ -1103,6 +1093,30 @@ class MainWindow(QMainWindow):
         self.quitApp()
         
 if __name__ == '__main__':
+    
+    githash = None
+    env = os.environ
+    env['PATH'] = '/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/local/git/bin:/opt/local/bin:/opt/local/sbin'
+    if platform.system() == 'Windows':
+        try:
+            subprocess.call(['make','deps'],env=env)
+        except OSError:
+            pass
+        except WindowsError:
+            pass
+    else:
+        try:
+            subprocess.call(['make','deps'],env=env)
+        except OSError:
+            pass
+    try:
+        f = open(os.path.join(os.path.realpath(os.path.dirname(sys.argv[0])), 'build-info'), 'r')
+        githash = f.read()
+        f.close()
+    except IOError:
+        pass
+    if not githash:
+        sys.exit("Must run 'make deps' before running.")
        
     tempdir = path = tempfile.mkdtemp()
     

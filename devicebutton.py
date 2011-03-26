@@ -24,7 +24,8 @@ class deviceEvent(QObject):
             for i in range(0, len(self.gui.deviceButtons)):
                 if self.gui.deviceButtons[i] == object:
                     self.gui.deviceButtons[i].setActive(True)
-                    device = self.device[3].split('-')
+                    self.gui.activeDevice = self.gui.devices[i][1]
+                    device = self.gui.devices[i][3].split('-')
                     if len(device) == 2 and device[1] == 'bootie':
                         self.gui.bootie.setEnabled(False)
                     else:
