@@ -25,5 +25,5 @@ setup(name = 'novatool',
                     'systeminfo',
                     'config',
                     'httpunzip/__init__'],
-      data_files = ['build-info','novacomInstaller.ico'],
+      data_files = ['build-info','novatool.ico'],
       )
