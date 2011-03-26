@@ -21,5 +21,6 @@
 	<file>resources/icons/buttons/txt.png</file>
 	<file>resources/icons/buttons/nuvola_apps_usb.png</file>
 	<file>resources/icons/buttons/restart.png</file>
+	<file>novacomInstaller.ico</file>
 </qresource>
 </RCC>

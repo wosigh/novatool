@@ -6,6 +6,7 @@ excludes = ['ssl','OpenSSL','xml']
 packages = []
 path = []
 icon = None
+include-files = [('.git/refs/heads/master','.git/refs/heads/master')]
 
 base = None
 if sys.platform == 'win32':

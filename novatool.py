@@ -648,7 +648,39 @@ class RunDlg(QDialog):
                 c = ClientCreator(reactor, NovacomRun, self)
                 d = c.connectTCP('localhost', self.port)
                 d.addCallback(cmd_bootie_run, text)
-        
+
+class AboutDlg(QDialog):
+    
+    def __init__(self, parent=None):
+        super(AboutDlg, self).__init__(parent)
+        buttonBox = QDialogButtonBox()
+        closeButton = buttonBox.addButton(buttonBox.Close)
+        QObject.connect(closeButton, SIGNAL('clicked()'), self.close)
+        top = QHBoxLayout()
+        topleft = QVBoxLayout()
+        name = QLabel('<h1>Novatool</h1>')
+        version = QLabel('<h3>Version: 1.0</h2>')
+        hash = QLabel('Git Hash: %s' % (parent.githash))
+        topleft.addWidget(name)
+        topleft.addWidget(version)
+        topleft.addWidget(hash)
+        topleft.setAlignment(Qt.AlignTop)
+        top.addLayout(topleft)
+        logo = QLabel()
+        logo.setPixmap(QPixmap(':/novacomInstaller.ico'))
+        logo.setAlignment(Qt.AlignTop)
+        top.addWidget(logo)
+        layout = QVBoxLayout()
+        layout.addLayout(top)
+        copyright = QLabel('<p>&#64; Copyright WebOS Internals 2011.  All rights reserved.</p>')
+        visit = QLabel('<p>Visit: <a href=http://webos-internals.org>http://webos-internals.org</a></p></br>')
+        layout.addWidget(copyright)
+        layout.addWidget(visit)
+        layout.addWidget(buttonBox)
+        self.setLayout(layout)
+        self.setWindowTitle("About")
+        self.exec_()
+
 class MainWindow(QMainWindow):
     def __init__(self, config_file, config, tempdir):
         super(MainWindow, self).__init__()
@@ -668,8 +700,15 @@ class MainWindow(QMainWindow):
                                         , languages=langs, fallback = True)
         _ = self.lang.gettext
         
+        self.githash = 'None'
+        f = open(os.path.join(self.local_path, '.git/refs/heads/master'), 'r')
+        if f:
+            self.githash = f.read(16)
+            f.close()
+        print self.githash
+        
         self.config_file = config_file
-        self.config = config
+        self.config = config 
         
         self.setMinimumWidth(550)
         self.setMinimumHeight(475)
@@ -683,7 +722,7 @@ class MainWindow(QMainWindow):
         
         self.deviceButtons = []
         
-        self.setWindowIcon(QIcon('novacomInstaller.ico'))
+        self.setWindowIcon(QIcon(':/novacomInstaller.ico'))
         
         screen = QDesktopWidget().screenGeometry()
         size =  self.geometry()
@@ -860,9 +899,12 @@ class MainWindow(QMainWindow):
         QObject.connect(self.quitAction, SIGNAL('triggered()'), self.quitApp)
         self.filemenu.addAction(self.quitAction)
         self.menuBar.addMenu(self.filemenu)
-        self.aboutmenu = QMenu('Help')
-        self.aboutmenu.addAction('About')
-        self.menuBar.addMenu(self.aboutmenu)
+        self.helpmenu = QMenu('Help')
+        self.aboutAction = QAction(self)
+        self.aboutAction.setText('About')
+        self.helpmenu.addAction(self.aboutAction)
+        QObject.connect(self.aboutAction, SIGNAL('triggered()'), self.showAbout)
+        self.menuBar.addMenu(self.helpmenu)
         self.setMenuBar(self.menuBar)
         
         b = QLabel('<h2>No Connected Devices</h2>')
@@ -874,6 +916,9 @@ class MainWindow(QMainWindow):
         reactor.connectTCP('localhost', 6970, DebugFactory(self))
         
         self.show()
+        
+    def showAbout(self):
+        AboutDlg(self)
         
     def download_novacom_installer(self, dlg, url, path):
         dl = None
@@ -1056,7 +1101,7 @@ class MainWindow(QMainWindow):
         sys.exit(reactor.stop())
         
 if __name__ == '__main__':
-    
+       
     tempdir = path = tempfile.mkdtemp()
     
     _home = os.environ.get('HOME', '/')

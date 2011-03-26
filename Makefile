@@ -85,5 +85,3 @@ macosx:
 	mv dist/macosx/novatool.app dist/macosx/Novatool.app
 	sh create-dmg/create-dmg --window-pos 400 400 --window-size 384 224 --volname Novatool dist/macosx/Novatool.dmg dist/macosx/Novatool.app
 	rm -rf dist/macosx/Novatool.app
-	#hdiutil create -srcfolder Novatool.app -volname Novatool -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDZO -imagekey zlib-level=9 Novatool.dmg; \
-	#rm -rf Novatool.app
