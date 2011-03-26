@@ -7,7 +7,7 @@ clean:
 	@rm -rf build
 
 distclean:
-	@rm -rf dist
+	@rm -rf dist build-info
 	
 build-info:
 	@git describe --dirty --always > build-info
@@ -22,6 +22,7 @@ windows: build-info
 	cp ~/.wine/drive_c/Python26/Lib/site-packages/PySide/shiboken-python2.6.dll build/exe.win32-2.6/
 	mkdir -p dist/windows
 	wine ~/.wine/drive_c/Program\ Files\ \(x86\)/Inno\ Setup\ 5/ISCC.exe win-installer.iss
+	mv dist/windows/NovatoolSetup.exe dist/windows/NovatoolSetup-`cat build-info`.exe
 
 linux: build-info
 
@@ -88,3 +89,4 @@ macosx: build-info
 	mv dist/macosx/novatool.app dist/macosx/Novatool.app
 	sh create-dmg/create-dmg --window-pos 400 400 --window-size 384 224 --volname Novatool dist/macosx/Novatool.dmg dist/macosx/Novatool.app
 	rm -rf dist/macosx/Novatool.app
+	mv dist/macosx/Novatool.dmg dist/macosx/Novatool-`cat build-info`.dmg
