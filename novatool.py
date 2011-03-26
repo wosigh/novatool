@@ -660,7 +660,7 @@ class AboutDlg(QDialog):
         topleft = QVBoxLayout()
         name = QLabel('<h1>Novatool</h1>')
         version = QLabel('<h3>Version: 1.0</h2>')
-        hash = QLabel('Git Hash: %s' % (parent.githash))
+        hash = QLabel('Build-ID: %s' % (parent.githash))
         topleft.addWidget(name)
         topleft.addWidget(version)
         topleft.addWidget(hash)
@@ -700,12 +700,12 @@ class MainWindow(QMainWindow):
                                         , languages=langs, fallback = True)
         _ = self.lang.gettext
         
-        self.githash = 'None'
-        f = open(os.path.join(self.local_path, '.git/refs/heads/master'), 'r')
-        if f:
-            self.githash = f.read(16)
-            f.close()
-        print self.githash
+        self.githash = subprocess.Popen(['git','describe','--dirty','--always'], stdout=subprocess.PIPE).communicate()[0][:-1]
+        if not self.githash:
+            f = open(os.path.join(self.local_path, 'build-info'), 'r')
+            if f:
+                self.githash = f.read()
+                f.close()
         
         self.config_file = config_file
         self.config = config 

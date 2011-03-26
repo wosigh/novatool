@@ -8,8 +8,11 @@ clean:
 
 distclean:
 	@rm -rf dist
+	
+build-info:
+	@git describe --dirty --always > build-info
 
-windows:
+windows: build-info
 	rm -rf dist/windows
 	wine ~/.wine/drive_c/Python26/python.exe setup-cx.py build
 	cp ~/.wine/drive_c/Python26/DLLs/python26.dll build/exe.win32-2.6/
@@ -20,9 +23,9 @@ windows:
 	mkdir -p dist/windows
 	wine ~/.wine/drive_c/Program\ Files\ \(x86\)/Inno\ Setup\ 5/ISCC.exe win-installer.iss
 
-linux:
+linux: build-info
 
-macosx:
+macosx: build-info
 	rm -rf dist/macosx
 	/opt/local/bin/python2.6 setup-cx.py build
 	mkdir -p dist/macosx/novatool.app/Contents

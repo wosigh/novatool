@@ -6,7 +6,7 @@ excludes = ['ssl','OpenSSL','xml']
 packages = []
 path = []
 icon = None
-include-files = [('.git/refs/heads/master','.git/refs/heads/master')]
+include_files = ['build-info']
 
 base = None
 if sys.platform == 'win32':
@@ -31,7 +31,8 @@ setup(
 	options = {'build_exe': {'includes': includes,
 				 'excludes': excludes,
 				 'packages': packages,
-				 'path': path
+				 'path': path,
+                 'include_files': include_files
 				 }},
 	executables = [Novatool]
 	)
