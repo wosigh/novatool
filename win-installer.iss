@@ -61,6 +61,7 @@ Source: "build\exe.win32-2.6\win32pipe.pyd"; DestDir: "{app}"; Flags: ignorevers
 Source: "build\exe.win32-2.6\win32process.pyd"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\exe.win32-2.6\win32security.pyd"; DestDir: "{app}"; Flags: ignoreversion
 Source: "build\exe.win32-2.6\zope.interface._zope_interface_coptimizations.pyd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\exe.win32-2.6\build-info"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

@@ -1,3 +1,5 @@
+.PHONY: build-info
+
 help:
 	@echo "Valid options are: macosx windows linux"
 

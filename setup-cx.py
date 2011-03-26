@@ -32,7 +32,7 @@ setup(
 				 'excludes': excludes,
 				 'packages': packages,
 				 'path': path,
-                 'include_files': include_files
+		                 'include_files': include_files
 				 }},
 	executables = [Novatool]
 	)
