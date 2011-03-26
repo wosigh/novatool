@@ -6,10 +6,7 @@ help:
 all: clean sdist macosx windows linux
 
 clean:
-	@rm -rf build
-
-distclean:
-	@rm -rf dist build-info
+	@rm -rf build dist build-info resources.py MANIFEST
 	
 resources:
 	@pyside-rcc resources.qrc > resources.py
