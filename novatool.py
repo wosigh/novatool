@@ -296,6 +296,7 @@ class NovacomInstallIPKG(Novacom):
 class NovacomDebugClient(NovacomDebug):
     
     def __init__(self, gui):
+        self.quit = False
         self.gui = gui
         self.gui.debugProto = self
         
@@ -304,18 +305,20 @@ class NovacomDebugClient(NovacomDebug):
         ClientCreator(reactor, DeviceCollectorClient, self.gui).connectTCP('localhost', 6968)
 
     def connectionLost(self, reason):
-        self.gui.updateStatusBar(False, 'Connection to novacomd lost.')
-        for device in self.gui.deviceButtons:
-            device.hide()
-            self.gui.deviceBoxLayout.removeWidget(device)
-            del device
-            
-        self.gui.activeDevice = None
-        b = QLabel('<h2>No Connected Devices</h2>')
-        b.setAlignment(Qt.AlignCenter)
-        self.gui.deviceButtons = [b]
-        self.gui.deviceBoxLayout.addWidget(self.gui.deviceButtons[0])
-
+        if self.quit:
+            self.gui.cleanup()
+        else:
+            self.gui.updateStatusBar(False, 'Connection to novacomd lost.')
+            for device in self.gui.deviceButtons:
+                device.hide()
+                self.gui.deviceBoxLayout.removeWidget(device)
+                del device
+                
+            self.gui.activeDevice = None
+            b = QLabel('<h2>No Connected Devices</h2>')
+            b.setAlignment(Qt.AlignCenter)
+            self.gui.deviceButtons = [b]
+            self.gui.deviceBoxLayout.addWidget(self.gui.deviceButtons[0])
         
     def devicesChanged(self):
         ClientCreator(reactor, DeviceCollectorClient, self.gui).connectTCP('localhost', 6968)
@@ -1010,13 +1013,16 @@ class MainWindow(QMainWindow):
                 elif platform.system() == 'Linux':
                     subprocess.call(['xdg-open',dl])
         
-    def quitApp(self):
-        if self.debugProto:
-            self.debugProto.transport.loseConnection()
+    def cleanup(self):
         shutil.rmtree(self.tempdir)
         self.save_config()
         reactor.stop()
         QApplication.quit()
+        
+    def quitApp(self):
+        if self.debugProto:
+            self.debugProto.quit = True
+            self.debugProto.transport.loseConnection()
         
     def updateStatusBar(self, connected, msg):
         if connected:
@@ -1104,7 +1110,7 @@ class MainWindow(QMainWindow):
             dlg.do_something((lambda: d.addCallback(cmd_installIPKG_URL, PREWARE)))
             
     def closeEvent(self, event=None):
-        sys.exit(reactor.stop())
+        self.quitApp()
         
 if __name__ == '__main__':
        
