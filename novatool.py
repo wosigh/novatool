@@ -1,11 +1,25 @@
 #!/usr/bin/env python
 
+import subprocess, os, sys
+
+env = os.environ
+env['PATH'] = '/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/local/git/bin:/opt/local/bin:/opt/local/sbin'
+subprocess.call(['make','deps'],env=env)
+try:
+    f = open(os.path.join(os.path.realpath(os.path.dirname(sys.argv[0])), 'build-info'), 'r')
+    githash = f.read()
+    f.close()
+except IOError:
+    pass
+if not githash:
+    sys.exit("Must run 'make deps' before running.")
+
 from PySide.QtCore import *
 from PySide.QtGui import *
 from devicebutton import *
 import qt4reactor
-import sys, tempfile, shutil, subprocess, os, platform, struct, tarfile, shlex
-if sys.platform == 'darwin': import _scproxy
+import sys, tempfile, shutil, os, platform, struct, tarfile, shlex
+if sys.platform == 'darwin': import extra_mod._scproxy as _scproxy
 
 import locale, gettext, urllib2, json
 from systeminfo import *
@@ -662,15 +676,13 @@ class AboutDlg(QDialog):
         top = QHBoxLayout()
         topleft = QVBoxLayout()
         name = QLabel('<h1>Novatool</h1>')
-        version = QLabel('<h3>Version: 0.99.0</h2>')
-        hash = QLabel('Build-ID: %s' % (parent.githash))
+        version = QLabel('<h3>Version: %s</h2>' % (parent.githash))
         topleft.addWidget(name)
         topleft.addWidget(version)
-        topleft.addWidget(hash)
         topleft.setAlignment(Qt.AlignTop)
         top.addLayout(topleft)
         logo = QLabel()
-        logo.setPixmap(QPixmap(':/novacomInstaller.ico'))
+        logo.setPixmap(QPixmap(':/novatool.png'))
         logo.setAlignment(Qt.AlignTop)
         top.addWidget(logo)
         layout = QVBoxLayout()
@@ -682,42 +694,18 @@ class AboutDlg(QDialog):
         layout.addWidget(buttonBox)
         self.setLayout(layout)
         self.setWindowTitle("About")
+        self.setSizeGripEnabled(False)
+        self.show()
+        self.setFixedSize(self.width(),self.height())
         self.exec_()
 
 class MainWindow(QMainWindow):
-    def __init__(self, config_file, config, tempdir):
+    def __init__(self, config_file, config, tempdir, githash):
         super(MainWindow, self).__init__()
-
-        self.local_path = os.path.realpath(os.path.dirname(sys.argv[0]))
-        langs = []
-        lc, encoding = locale.getdefaultlocale()
-        if (lc):
-            langs = [lc]
-        language = os.environ.get('LANGUAGE', None)
-        if (language):
-            langs += language.split(":")
-        langs += ['it','de_CH','en_US']
-        gettext.bindtextdomain(APP_NAME, self.local_path)
-        gettext.textdomain(APP_NAME)
-        self.lang = gettext.translation(APP_NAME, self.local_path
-                                        , languages=langs, fallback = True)
-        _ = self.lang.gettext
-        
-        try:
-            self.githash = subprocess.Popen(['git','describe','--dirty','--always'], stdout=subprocess.PIPE).communicate()[0][:-1]
-        except WindowsError:
-            self.githash = None
-        except OSError:
-            self.githash = None
-                
-        if not self.githash:
-            f = open(os.path.join(self.local_path, 'build-info'), 'r')
-            if f:
-                self.githash = f.read()
-                f.close()
         
         self.config_file = config_file
         self.config = config 
+        self.githash = githash
         
         self.setMinimumWidth(550)
         self.setMinimumHeight(475)
@@ -731,7 +719,7 @@ class MainWindow(QMainWindow):
         
         self.deviceButtons = []
         
-        self.setWindowIcon(QIcon(':/novacomInstaller.ico'))
+        self.setWindowIcon(QIcon(':/novatool.png'))
         
         screen = QDesktopWidget().screenGeometry()
         size =  self.geometry()
@@ -742,7 +730,7 @@ class MainWindow(QMainWindow):
         self.main = QHBoxLayout()
         self.tabs = QTabWidget()
         
-        self.deviceBox = QGroupBox(_('Devices'))
+        self.deviceBox = QGroupBox('Devices')
         self.deviceBoxLayout = QHBoxLayout()
         self.deviceBox.setLayout(self.deviceBoxLayout)
                        
@@ -1132,5 +1120,5 @@ if __name__ == '__main__':
     config_file = os.path.join(novatool_config_home,"config")
     config = load_config(config_file)
     
-    mainWin = MainWindow(config_file, config, tempdir)
+    mainWin = MainWindow(config_file, config, tempdir, githash)
     sys.exit(reactor.run())
