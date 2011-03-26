@@ -1,9 +1,9 @@
 .PHONY: build-info resources
 
 help:
-	@echo "Valid options are: macosx windows linux"
+	@echo "Valid options are: macosx windows ubuntu"
 
-all: clean sdist macosx windows linux
+all: clean sdist macosx windows ubuntu
 
 clean:
 	@rm -rf build dist build-info resources.py MANIFEST
@@ -31,8 +31,30 @@ windows: deps
 	wine ~/.wine/drive_c/Program\ Files\ \(x86\)/Inno\ Setup\ 5/ISCC.exe win-installer.iss
 	mv dist/windows/NovatoolSetup.exe dist/windows/NovatoolSetup-`cat build-info`.exe
 
-linux: deps
+ubuntu: deps
+	rm -rf dist/ubuntu
+	mkdir -p dist/ubuntu/data/usr/bin
+	mkdir -p dist/ubuntu/data/usr/share/novatool/httpunzip
+	mkdir -p dist/ubuntu/data/usr/share/pixmaps/
+	mkdir -p dist/ubuntu/data/usr/share/applications/
+	mkdir -p dist/ubuntu/data/DEBIAN
+	cp *.py dist/ubuntu/data/usr/share/novatool/
+	cp build-info dist/ubuntu/data/usr/share/novatool/
+	cp httpunzip/__init__.py dist/ubuntu/data/usr/share/novatool/httpunzip
+	cp novatool.png dist/ubuntu/data/usr/share/pixmaps/novatool-1.0.png
+	cp novatool-novatool.desktop dist/ubuntu/data/usr/share/applications/
+	cp novatool dist/ubuntu/data/usr/bin/
+	echo "Package: novatool" > dist/ubuntu/data/DEBIAN/control
+	echo "Version: 0.99.0" >> dist/ubuntu/data/DEBIAN/control
+	echo "Architecture: i386" >> dist/ubuntu/data/DEBIAN/control
+	echo "Maintainer: Ryan Hope <rmh3093@gmail.com>" >> dist/ubuntu/data/DEBIAN/control
+	echo "Installed-Size: $$(du -s dist/ubuntu/data | cut -f 1)" >> dist/ubuntu/data/DEBIAN/control
+	echo "Section: Utility" >> dist/ubuntu/data/DEBIAN/control
+	echo "Description: A tool for WebOS devices." >> dist/ubuntu/data/DEBIAN/control
+	cd dist/ubuntu; dpkg-deb -b data novatool-0.99.0.deb; \
+	rm -rf data
 
+	
 macosx: deps
 	rm -rf dist/macosx
 	/opt/local/bin/python2.6 setup/setup-cx.py build

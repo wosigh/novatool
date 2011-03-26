@@ -662,7 +662,7 @@ class AboutDlg(QDialog):
         top = QHBoxLayout()
         topleft = QVBoxLayout()
         name = QLabel('<h1>Novatool</h1>')
-        version = QLabel('<h3>Version: 1.0</h2>')
+        version = QLabel('<h3>Version: 0.99.0</h2>')
         hash = QLabel('Build-ID: %s' % (parent.githash))
         topleft.addWidget(name)
         topleft.addWidget(version)
@@ -883,7 +883,7 @@ class MainWindow(QMainWindow):
                 
         self.novatool.setLayout(self.hbox)
         self.setCentralWidget(self.novatool)
-        self.setWindowTitle('Novatool 1.0')
+        self.setWindowTitle('Novatool 0.99.0')
         self.setUnifiedTitleAndToolBarOnMac(True)
         
         self.icon_disconneced = QPixmap(':/resources/icons/buttons/network-disconnect.png')

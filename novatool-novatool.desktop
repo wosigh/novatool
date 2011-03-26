@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Novatool
+Type=Application
+Comment=A tool for working with WebOS devices.
+Exec=novatool
+TryExec=novatool
+Icon=novatool-1.0
+Categories=Utility;
