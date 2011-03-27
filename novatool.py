@@ -333,6 +333,9 @@ class NovacomDebugClient(NovacomDebug):
         self.gui = gui
         self.gui.debugProto = self
         
+    def event_debug(self, data):
+        pass
+        
     def connectionMade(self):
         self.gui.updateStatusBar(True, 'Connected to novacomd.')
         ClientCreator(reactor, DeviceCollectorClient, self.gui).connectTCP('localhost', 6968)
@@ -723,11 +726,11 @@ class AboutDlg(QDialog):
         self.exec_()
 
 class MainWindow(QMainWindow):
-    def __init__(self, config_file, config, tempdir, githash):
+    def __init__(self, config_file, tempdir, githash):
         super(MainWindow, self).__init__()
         
         self.config_file = config_file
-        self.config = config 
+        self.config = load_config(config_file)
         self.githash = githash
         
         self.setMinimumWidth(550)
@@ -1135,10 +1138,11 @@ if __name__ == '__main__':
     else:
         novatool_config_home = os.path.join(_home, '.novatool')
     if not os.path.exists(novatool_config_home):
-        os.makedirs(novatool_config_home)        
+        os.makedirs(novatool_config_home)
+        
     config_file = os.path.join(novatool_config_home,"config")
-    config = load_config(config_file)
     
-    mainWin = MainWindow(config_file, config, tempdir, githash)
+    mainWin = MainWindow(config_file, tempdir, githash)
+    print mainWin.winId()
     reactor.run()
     QApplication.quit()
