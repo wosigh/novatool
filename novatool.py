@@ -323,7 +323,6 @@ class NovacomInstallIPKG(Novacom):
 class NovacomDebugClient(NovacomDebug):
     
     def __init__(self, gui):
-        self.quit = False
         self.gui = gui
         self.gui.debugProto = self
         
@@ -332,20 +331,17 @@ class NovacomDebugClient(NovacomDebug):
         ClientCreator(reactor, DeviceCollectorClient, self.gui).connectTCP('localhost', 6968)
 
     def connectionLost(self, reason):
-        if self.quit:
-            self.gui.cleanup()
-        else:
-            self.gui.updateStatusBar(False, 'Connection to novacomd lost.')
-            for device in self.gui.deviceButtons:
-                device.hide()
-                self.gui.deviceBoxLayout.removeWidget(device)
-                del device
-                
-            self.gui.activeDevice = None
-            b = QLabel('<h2>No Connected Devices</h2>')
-            b.setAlignment(Qt.AlignCenter)
-            self.gui.deviceButtons = [b]
-            self.gui.deviceBoxLayout.addWidget(self.gui.deviceButtons[0])
+        self.gui.updateStatusBar(False, 'Connection to novacomd lost.')
+        for device in self.gui.deviceButtons:
+            device.hide()
+            self.gui.deviceBoxLayout.removeWidget(device)
+            del device
+            
+        self.gui.activeDevice = None
+        b = QLabel('<h2>No Connected Devices</h2>')
+        b.setAlignment(Qt.AlignCenter)
+        self.gui.deviceButtons = [b]
+        self.gui.deviceBoxLayout.addWidget(self.gui.deviceButtons[0])
         
     def devicesChanged(self):
         ClientCreator(reactor, DeviceCollectorClient, self.gui).connectTCP('localhost', 6968)
@@ -416,12 +412,12 @@ class DebugFactory(ReconnectingClientFactory):
         self.gui.updateStatusBar(False, 'Connecting to novacomd ...')
 
     def clientConnectionLost(self, connector, reason):
-        ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
         self.gui.updateStatusBar(False, 'Connection to novacomd lost!')
+        ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
 
     def clientConnectionFailed(self, connector, reason):
-        ReconnectingClientFactory.clientConnectionFailed(self, connector, reason)
         self.gui.updateStatusBar(False, 'Connection to novacomd failed!')
+        ReconnectingClientFactory.clientConnectionFailed(self, connector, reason)
 
 class ProgressDlg(QDialog):
 
@@ -1018,16 +1014,11 @@ class MainWindow(QMainWindow):
                     subprocess.call(['msiexec','/i',dl])
                 elif platform.system() == 'Linux':
                     subprocess.call(['xdg-open',dl])
-        
-    def cleanup(self):
+                    
+    def quitApp(self):
         shutil.rmtree(self.tempdir)
         self.save_config()
         reactor.stop()
-        
-    def quitApp(self):
-        if self.debugProto:
-            self.debugProto.quit = True
-            self.debugProto.transport.loseConnection()
         
     def updateStatusBar(self, connected, msg):
         if connected:
