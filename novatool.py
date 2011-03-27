@@ -883,7 +883,7 @@ class MainWindow(QMainWindow):
             self.filemenu.addSeparator()
         self.quitAction = QAction(self)
         self.quitAction.setText('&Quit')
-        if system.platform() != 'Darwin':
+        if platform.system() != 'Darwin':
             self.quitAction.setShortcut(QKeySequence(Qt.CTRL + Qt.Key_Q))
         QObject.connect(self.quitAction, SIGNAL('triggered()'), self.quitApp)
         self.filemenu.addAction(self.quitAction)
