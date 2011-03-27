@@ -54,7 +54,7 @@ import resources
 jar = 'http://palm.cdnetworks.net/rom/pre2/p210sfr03082011/wrep210rod/webosdoctorp103ueuna-wr.jar'
 
 PREWARE = 'http://get.preware.org/org.webosinternals.preware.ipk'
-PREWARE_LATEST = 'http://ipkg.preware.org/feeds/webos-internals/testing/armv6/org.webosinternals.preware_1.5.7_arm.ipk'
+PREWARE_LATEST = 'http://ipkg.preware.org/feeds/webos-internals/testing/armv6/org.webosinternals.preware_1.5.8_arm.ipk'
        
 NOVA_WIN32  = 'resources/NovacomInstaller_x86.msi'
 NOVA_WIN64  = 'resources/NovacomInstaller_x64.msi'
@@ -291,8 +291,8 @@ class NovacomInstallIPKG(Novacom):
     def chunk_report(self, bytes_so_far, chunk_size, total_size):
         self.gui.progress.setValue(dlPercent(bytes_so_far, chunk_size, total_size))
         
-    def cmd_stderr_event(self, data):
-        resp = json.loads(data[data.find(',')+1:].strip())
+    def _processResponse(self, data):
+        resp = json.loads(data[data.find('{'):].strip())
         if resp.has_key('returnValue') and resp['returnValue']:
             self.gui.update_progress(0, 'Stage 2')
         elif resp.has_key('status'):
@@ -300,6 +300,13 @@ class NovacomInstallIPKG(Novacom):
             if resp['status'] == 'SUCCESS' or resp['status'].startswith('FAILED'):
                 self.transport.loseConnection()
                 self.gui.closeButton.setEnabled(True)
+        
+    def cmd_stdout_event(self, data):
+        self._processResponse(data)
+        
+    def cmd_stderr_event(self, data):
+        self._processResponse(data)
+
     
     def cmd_status(self, msg):
         if msg == 'ok 0' and self.port:
@@ -442,10 +449,10 @@ class ProgressDlg(QDialog):
     def closePress(self):
         self.done(True)
         
-    def update_progress(self, p=0, msg=None):
-        if msg:
+    def update_progress(self, p=None, msg=None):
+        if msg != None:
             self.state.setText(msg)
-        if p:
+        if p != None:
             self.progress.setValue(p)
             
     def do_something(self, something):
@@ -1109,7 +1116,7 @@ class MainWindow(QMainWindow):
             dlg = ProgressDlg(self, imsg='Preparing to install IPK...')
             c = ClientCreator(reactor, NovacomInstallIPKG, dlg, port)
             d = c.connectTCP('localhost', port)
-            dlg.do_something((lambda: d.addCallback(cmd_installIPKG_URL, PREWARE)))
+            dlg.do_something((lambda: d.addCallback(cmd_installIPKG_URL, PREWARE_LATEST)))
             
     def closeEvent(self, event=None):
         self.quitApp()
