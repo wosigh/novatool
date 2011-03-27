@@ -1,12 +1,36 @@
 #!/usr/bin/env python
 
-import subprocess, os, sys
+import subprocess, os, sys, platform
+
+githash = None
+env = os.environ
+env['PATH'] = '/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/local/git/bin:/opt/local/bin:/opt/local/sbin'
+if platform.system() == 'Windows':
+    try:
+        subprocess.call(['make','deps'],env=env)
+    except OSError:
+        pass
+    except WindowsError:
+        pass
+else:
+    try:
+        subprocess.call(['make','deps'],env=env)
+    except OSError:
+        pass
+try:
+    f = open(os.path.join(os.path.realpath(os.path.dirname(sys.argv[0])), 'build-info'), 'r')
+    githash = f.read()
+    f.close()
+except IOError:
+    pass
+if not githash:
+    sys.exit("Must run 'make deps' before running.")
 
 from PySide.QtCore import *
 from PySide.QtGui import *
 from devicebutton import *
 import qt4reactor
-import sys, tempfile, shutil, os, platform, struct, tarfile, shlex
+import tempfile, shutil, struct, tarfile, shlex
 if sys.platform == 'darwin':
     import _scproxy
 
@@ -1094,30 +1118,6 @@ class MainWindow(QMainWindow):
         self.quitApp()
         
 if __name__ == '__main__':
-    
-    githash = None
-    env = os.environ
-    env['PATH'] = '/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/local/git/bin:/opt/local/bin:/opt/local/sbin'
-    if platform.system() == 'Windows':
-        try:
-            subprocess.call(['make','deps'],env=env)
-        except OSError:
-            pass
-        except WindowsError:
-            pass
-    else:
-        try:
-            subprocess.call(['make','deps'],env=env)
-        except OSError:
-            pass
-    try:
-        f = open(os.path.join(os.path.realpath(os.path.dirname(sys.argv[0])), 'build-info'), 'r')
-        githash = f.read()
-        f.close()
-    except IOError:
-        pass
-    if not githash:
-        sys.exit("Must run 'make deps' before running.")
        
     tempdir = path = tempfile.mkdtemp()
     
