@@ -45,13 +45,14 @@ ubuntu: deps
 	cp novatool-novatool.desktop dist/ubuntu/data/usr/share/applications/
 	cp novatool dist/ubuntu/data/usr/bin/
 	echo "Package: novatool" > dist/ubuntu/data/DEBIAN/control
-	echo "Version: 0.99.0" >> dist/ubuntu/data/DEBIAN/control
+	echo "Version: 0.99.1" >> dist/ubuntu/data/DEBIAN/control
+	echo "Depends: python-pyside, python-zope.interface, python-twisted" >> dist/ubuntu/data/DEBIAN/control
 	echo "Architecture: i386" >> dist/ubuntu/data/DEBIAN/control
 	echo "Maintainer: Ryan Hope <rmh3093@gmail.com>" >> dist/ubuntu/data/DEBIAN/control
 	echo "Installed-Size: $$(du -s dist/ubuntu/data | cut -f 1)" >> dist/ubuntu/data/DEBIAN/control
 	echo "Section: Utility" >> dist/ubuntu/data/DEBIAN/control
 	echo "Description: A tool for WebOS devices." >> dist/ubuntu/data/DEBIAN/control
-	cd dist/ubuntu; dpkg-deb -b data novatool-0.99.0.deb; \
+	cd dist/ubuntu; dpkg-deb -b data novatool-0.99.1.deb; \
 	rm -rf data
 
 	
