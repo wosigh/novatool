@@ -999,7 +999,6 @@ class MainWindow(QMainWindow):
         shutil.rmtree(self.tempdir)
         self.save_config()
         reactor.stop()
-        QApplication.quit()
         
     def quitApp(self):
         if self.debugProto:
@@ -1137,4 +1136,5 @@ if __name__ == '__main__':
     config = load_config(config_file)
     
     mainWin = MainWindow(config_file, config, tempdir, githash)
-    sys.exit(reactor.run())
+    reactor.run()
+    QApplication.quit()
