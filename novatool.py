@@ -449,6 +449,7 @@ class ProgressDlg(QDialog):
         pglayout.addWidget(self.buttonBox)
         self.setLayout(pglayout)
         self.setWindowTitle('Progress')
+        self.setSizeGripEnabled(False)
         
     def closePress(self):
         self.done(True)
@@ -461,6 +462,8 @@ class ProgressDlg(QDialog):
             
     def do_something(self, something):
         QTimer.singleShot(0, something)
+        self.show()
+        self.setFixedSize(self.width(),self.height())
         if self.exec_():
             return self.result
         else:
@@ -730,7 +733,6 @@ class Activator(protocol.Protocol):
     def __init__(self, gui):
         self.gui = gui
     def connectionMade(self):
-        print 'already running'
         self.gui.activateWindow()
         self.gui.raise_()
         self.transport.loseConnection()
