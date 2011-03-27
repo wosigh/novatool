@@ -57,6 +57,7 @@ ubuntu: deps
 	
 macosx: deps
 	rm -rf dist/macosx
+	python -m py_compile _scproxy.py
 	/opt/local/bin/python2.6 setup/setup-cx.py build
 	mkdir -p dist/macosx/novatool.app/Contents
 	mkdir dist/macosx/novatool.app/Contents/MacOS
@@ -114,9 +115,7 @@ macosx: deps
   			done; \
  		fi; \
 	done
-	cd extra_mod; \
-	python -m py_compile *.py; \
-	zip -u ../dist/macosx/novatool.app/Contents/MacOS/library.zip _scproxy.pyc _md5.pyc _sha.pyc _sha256.pyc _sha512.pyc
+	#zip -u dist/macosx/novatool.app/Contents/MacOS/library.zip _scproxy.pyc _md5.pyc _sha.pyc _sha256.pyc _sha512.pyc
 	mv dist/macosx/novatool.app dist/macosx/Novatool.app
 	sh create-dmg/create-dmg --window-pos 400 400 --window-size 384 224 --volname Novatool dist/macosx/Novatool.dmg dist/macosx/Novatool.app
 	rm -rf dist/macosx/Novatool.app

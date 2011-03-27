@@ -7,7 +7,8 @@ from PySide.QtGui import *
 from devicebutton import *
 import qt4reactor
 import sys, tempfile, shutil, os, platform, struct, tarfile, shlex
-if sys.platform == 'darwin': import extra_mod._scproxy as _scproxy
+if sys.platform == 'darwin':
+    import _scproxy
 
 import locale, gettext, urllib2, json
 from systeminfo import *
@@ -882,7 +883,8 @@ class MainWindow(QMainWindow):
             self.filemenu.addSeparator()
         self.quitAction = QAction(self)
         self.quitAction.setText('&Quit')
-        self.quitAction.setShortcut(QKeySequence(Qt.CTRL + Qt.Key_Q))
+        if system.platform() != 'Darwin':
+            self.quitAction.setShortcut(QKeySequence(Qt.CTRL + Qt.Key_Q))
         QObject.connect(self.quitAction, SIGNAL('triggered()'), self.quitApp)
         self.filemenu.addAction(self.quitAction)
         self.menuBar.addMenu(self.filemenu)
