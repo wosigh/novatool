@@ -30,7 +30,7 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 from devicebutton import *
 import qt4reactor
-import tempfile, shutil, struct, tarfile, shlex
+import tempfile, shutil, struct, tarfile, shlex, socket
 if sys.platform == 'darwin':
     import _scproxy
 
@@ -44,9 +44,10 @@ APP_NAME = 'novatool'
 app = QApplication(sys.argv)
 qt4reactor.install()
 
-from twisted.internet import reactor
+from twisted.internet import reactor, protocol
 from twisted.internet.protocol import ClientCreator, ReconnectingClientFactory
 from twisted.internet.error import ConnectionRefusedError
+from twisted.python.lockfile import FilesystemLock, isLocked
 from novacom import DeviceCollector, Novacom, NovacomDebug
 
 import resources
@@ -725,13 +726,38 @@ class AboutDlg(QDialog):
         self.setFixedSize(self.width(),self.height())
         self.exec_()
 
+class Activator(protocol.Protocol):
+    def __init__(self, gui):
+        self.gui = gui
+    def connectionMade(self):
+        print 'already running'
+        self.gui.activateWindow()
+        self.gui.raise_()
+        self.transport.loseConnection()
+        
+class ActivatorFactory(protocol.ServerFactory):
+    def __init__(self, gui):
+        self.gui = gui
+    def buildProtocol(self, addr):
+        return Activator(self.gui)
+
 class MainWindow(QMainWindow):
-    def __init__(self, config_file, tempdir, githash):
+    def __init__(self, novatool_config_home, tempdir, githash):
         super(MainWindow, self).__init__()
         
-        self.config_file = config_file
-        self.config = load_config(config_file)
+        self.setFocusPolicy(Qt.StrongFocus)
+       
+        self.novatool_config_home = novatool_config_home
+        
+        self.config_file = os.path.join(novatool_config_home,'config')
+        self.config = load_config(self.config_file)
         self.githash = githash
+        
+        self.ipc_file = os.path.join(novatool_config_home,'ipc')
+        self.ipc = reactor.listenTCP(0, ActivatorFactory(self))
+        f = open(self.ipc_file,'w')
+        f.write(str(self.ipc.getHost().port))
+        f.close()
         
         self.setMinimumWidth(550)
         self.setMinimumHeight(475)
@@ -1033,6 +1059,7 @@ class MainWindow(QMainWindow):
                     
     def quitApp(self):
         shutil.rmtree(self.tempdir)
+        os.remove(self.ipc_file)
         self.save_config()
         reactor.stop()
         
@@ -1140,9 +1167,20 @@ if __name__ == '__main__':
     if not os.path.exists(novatool_config_home):
         os.makedirs(novatool_config_home)
         
-    config_file = os.path.join(novatool_config_home,"config")
+    ipc_file = os.path.join(novatool_config_home,'ipc')
     
-    mainWin = MainWindow(config_file, tempdir, githash)
-    print mainWin.winId()
-    reactor.run()
-    QApplication.quit()
+    lock = FilesystemLock(os.path.join(novatool_config_home,"lock"))
+    if lock.lock():
+        mainWin = MainWindow(novatool_config_home, tempdir, githash)
+        reactor.run()
+        lock.unlock()
+        QApplication.quit()
+    else:
+        if os.path.isfile(ipc_file):
+            f = open(ipc_file,'r')
+            ipc_port = int(f.read())
+            f.close()
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect(('localhost', ipc_port))
+        else:
+            print lock.name, 'is locked.'
