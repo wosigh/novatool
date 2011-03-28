@@ -117,13 +117,11 @@ class Novacom(Protocol):
         
 class DeviceCollector(Protocol):
     
-    devices = []
-    
     def __init__(self, finished):
+        self.devices = []
         self.finished = finished
     
     def dataReceived(self, data):
-        self.devices = []
         for d in data[:-1].split('\n'):
             d = d.split(' ')
             self.devices.append((int(d[0]), d[1], d[2], d[3]))
