@@ -49,7 +49,7 @@ from twisted.web.client import Agent
 from twisted.internet.defer import Deferred
 from twisted.internet import reactor, protocol
 from twisted.internet.protocol import ClientCreator, ReconnectingClientFactory
-from twisted.internet.error import ConnectionRefusedError
+from twisted.internet.error import ConnectionRefusedError, ConnectError
 from twisted.python.lockfile import FilesystemLock, isLocked
 from novacom import DeviceCollector, Novacom, NovacomDebug
 
@@ -68,6 +68,9 @@ NOVA_LINUX32 = 'https://cdn.downloads.palm.com/sdkdownloads/2.1.0.519/sdkBinarie
 NOVA_LINUX64 = 'https://cdn.downloads.palm.com/sdkdownloads/2.1.0.519/sdkBinaries/palm-novacom_1.0.64_amd64.deb'
 
 REMOTE_TEMP = '/media/internal/.developer'
+
+def gotNoProtocol(failure, callback):
+    callback(failure)
 
 def gotProtocol(protocol, callback):
     return protocol.finished.addCallback(callback)
@@ -706,9 +709,10 @@ class MainWindow(QMainWindow):
         
         self.tempdir = tempdir
         
-        self.devices = []
+        self.devices = -1
         self.activeDevice = None
         
+        self.ndev = -1
         self.deviceButtons = []
         
         self.setWindowIcon(QIcon(':/novatool.png'))
@@ -865,15 +869,6 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.novatool)
         self.setWindowTitle('Novatool %s' % (self.githash))
         self.setUnifiedTitleAndToolBarOnMac(True)
-        
-        self.icon_disconneced = QPixmap(':/resources/icons/buttons/network-disconnect.png')
-        self.icon_connected = QPixmap(':/resources/icons/buttons/network-connect.png')
-        self.statusBar = QStatusBar()
-        self.statusBar.setSizeGripEnabled(False)
-        self.statusIcon = QLabel()
-        self.statusMsg = QLabel()
-        self.updateStatusBar(False, None)
-        self.setStatusBar(self.statusBar)
                 
         self.menuBar = QMenuBar()
         self.filemenu = QMenu('&File')
@@ -898,7 +893,7 @@ class MainWindow(QMainWindow):
         self.menuBar.addMenu(self.helpmenu)
         self.setMenuBar(self.menuBar)
         
-        b = QLabel('<h2>No Connected Devices</h2>')
+        b = QLabel()
         b.setAlignment(Qt.AlignCenter)
         self.deviceButtons = [b]
         self.deviceBoxLayout.addWidget(self.deviceButtons[0])
@@ -918,25 +913,31 @@ class MainWindow(QMainWindow):
         self.save_config()
 
     def pollDevices(self):
-        d = ClientCreator(reactor, DeviceCollector, Deferred()).connectTCP('localhost', 6968)
+        d = ClientCreator(reactor, DeviceCollector).connectTCP('localhost', 6968)
         d.addCallback(gotProtocol, self.processDevices)
-        
-    def processDevices(self, devices):
+        d.addErrback(gotNoProtocol, self.noNovacomd)
 
+    def noNovacomd(self, failure):
+        self.processDevices(None, False)
+        
+    def processDevices(self, devices, novacom=True):
+        
         if self.devices != devices:
 
             self.devices = devices
-                    
-            ndev = len(self.devices)
+
             for device in self.deviceButtons:
                 device.hide()
                 self.deviceBoxLayout.removeWidget(device)
                 del device
             
             noActive = True
-            if ndev > 0:
-                self.deviceButtons = [None] * ndev 
-                for i in range(0,ndev):
+            self.ndev = 0
+            if self.devices:
+                self.ndev = len(self.devices)
+            if self.ndev > 0:
+                self.deviceButtons = [None] * self.ndev 
+                for i in range(0,self.ndev):
                     self.deviceButtons[i] = DeviceButton(self, self.devices[i])
                     if self.devices[i][1] == self.activeDevice:
                         noActive = False
@@ -957,7 +958,10 @@ class MainWindow(QMainWindow):
             else:
                 self.setWidgetsEnabled(False)
                 self.activeDevice = None
-                self.deviceButtons = [QLabel('<h2>No Connected Devices</h2>')]
+                if novacom:
+                    self.deviceButtons = [QLabel('<h2>No Connected Devices</h2>')]
+                else:
+                    self.deviceButtons = [QLabel('<h2>Novacomd Is Not Running</h2>')]
                 self.deviceButtons[0].setAlignment(Qt.AlignCenter)
                 self.deviceBoxLayout.addWidget(self.deviceButtons[0])
             
@@ -1011,12 +1015,13 @@ class MainWindow(QMainWindow):
 
     def getActiveMode(self):
         mode = None
-        for dev in self.devices:
-            if self.activeDevice == dev[1]:
-                device = dev[3].split('-')
-                if len(device):
-                    mode = device[1]
-                    break
+        if self.devices and self.devices != -1:
+            for dev in self.devices:
+                if self.activeDevice == dev[1]:
+                    device = dev[3].split('-')
+                    if len(device):
+                        mode = device[1]
+                        break
         return mode
 
     def save_config(self):
@@ -1057,17 +1062,7 @@ class MainWindow(QMainWindow):
         os.remove(self.ipc_file)
         self.save_config()
         reactor.stop()
-        
-    def updateStatusBar(self, connected, msg):
-        if connected:
-            self.statusIcon.setPixmap(self.icon_connected)
-        else:
-            self.statusIcon.setPixmap(self.icon_disconneced)
-        self.statusBar.addWidget(self.statusIcon)
-        if msg:
-            self.statusMsg.setText(msg)
-            self.statusBar.addWidget(self.statusMsg)
-        
+                
     def getFile(self):
         port = self.getActivePort()
         if port:

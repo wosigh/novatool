@@ -117,9 +117,9 @@ class Novacom(Protocol):
         
 class DeviceCollector(Protocol):
     
-    def __init__(self, finished):
+    def __init__(self):
         self.devices = []
-        self.finished = finished
+        self.finished = Deferred()
     
     def dataReceived(self, data):
         for d in data[:-1].split('\n'):
