@@ -51,7 +51,7 @@ from twisted.internet import reactor, protocol
 from twisted.internet.protocol import ClientCreator, ReconnectingClientFactory
 from twisted.internet.error import ConnectionRefusedError, ConnectError
 from twisted.python.lockfile import FilesystemLock, isLocked
-from novacom import DeviceCollector, Novacom, NovacomDebug
+from novacom import DeviceCollector, Novacom
 
 import resources
 
@@ -704,8 +704,6 @@ class MainWindow(QMainWindow):
         
         self.setMinimumWidth(550)
         self.setMinimumHeight(475)
-        
-        self.debugProto = None
         
         self.tempdir = tempdir
         

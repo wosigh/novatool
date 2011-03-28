@@ -5,27 +5,6 @@ from twisted.internet.protocol import Factory, Protocol
 from twisted.protocols.basic import LineReceiver
 from twisted.internet.defer import Deferred
 
-class NovacomDebug(LineReceiver):
-    
-    delimiter = '\n'
-    
-    def lineReceived(self, line):
-        tmp = line
-        i = tmp.find(']')
-        date = tmp[:i+1]
-        tmp = tmp[i+2:]
-        i = tmp.find(' ')
-        cmd = tmp[:i].split(':')[0]
-        if cmd == 'removing' or cmd == 'dev':
-            self.devicesChanged()
-        self.event_debug(line)
-        
-    def event_debug(self, msg):
-        pass
-            
-    def devicesChanged(self):
-        pass
-
 class Novacom(Protocol):
     
     MAGIC = 0xdecafbad
