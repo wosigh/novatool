@@ -69,6 +69,9 @@ NOVA_LINUX64 = 'https://cdn.downloads.palm.com/sdkdownloads/2.1.0.519/sdkBinarie
 
 REMOTE_TEMP = '/media/internal/.developer'
 
+def gotProtocol(protocol, callback):
+    return protocol.finished.addCallback(callback)
+
 def dlPercent(bytes_so_far, chunk_size, total_size):
     return int( float(bytes_so_far) / total_size * 100 )
 
@@ -364,108 +367,6 @@ class NovacomInstallIPKG(Novacom):
             c = ClientCreator(reactor, NovacomInstallIPKG, self.gui, None)
             d = c.connectTCP('localhost', self.port)
             d.addCallback(cmd_run, False, '/usr/bin/luna-send -i luna://com.palm.appinstaller/installNoVerify {\"subscribe\":true,\"target\":\"/media/internal/.developer/%s\",\"uncompressedSize\":0}' % (self.file__))
-
-class NovacomDebugClient(NovacomDebug):
-    
-    def __init__(self, gui):
-        self.gui = gui
-        self.gui.debugProto = self
-        
-    def event_debug(self, data):
-        pass
-        
-    def connectionMade(self):
-        self.gui.updateStatusBar(True, 'Connected to novacomd.')
-        ClientCreator(reactor, DeviceCollectorClient, self.gui).connectTCP('localhost', 6968)
-
-    def connectionLost(self, reason):
-        self.gui.updateStatusBar(False, 'Connection to novacomd lost.')
-        for device in self.gui.deviceButtons:
-            device.hide()
-            self.gui.deviceBoxLayout.removeWidget(device)
-            del device
-            
-        self.gui.activeDevice = None
-        b = QLabel('<h2>No Connected Devices</h2>')
-        b.setAlignment(Qt.AlignCenter)
-        self.gui.deviceButtons = [b]
-        self.gui.deviceBoxLayout.addWidget(self.gui.deviceButtons[0])
-        
-    def devicesChanged(self):
-        ClientCreator(reactor, DeviceCollectorClient, self.gui).connectTCP('localhost', 6968)
-        
-class DeviceCollectorClient(DeviceCollector):
-    
-    def __init__(self, gui):
-        self.gui = gui
-        
-    def connectionLost(self, reason):
-        self.gui.devices = self.devices        
-        ndev = len(self.devices)
-        for device in self.gui.deviceButtons:
-            device.hide()
-            self.gui.deviceBoxLayout.removeWidget(device)
-            del device
-        
-        noActive = True
-        if ndev > 0:
-            self.gui.deviceButtons = [None] * ndev 
-            for i in range(0,ndev):
-                self.gui.deviceButtons[i] = DeviceButton(self.gui, self.devices[i])
-                if self.devices[i][1] == self.gui.activeDevice:
-                    noActive = False
-                    self.gui.deviceButtons[i].setActive(True)
-                else:
-                    self.gui.deviceButtons[i].setActive(False)
-                self.gui.deviceBoxLayout.addWidget(self.gui.deviceButtons[i])
-            if noActive:
-                self.gui.activeDevice = self.devices[0][1]
-                self.gui.deviceButtons[0].setActive(True)
-            self.gui.setWidgetsEnabled(True)
-            if self.gui.getActiveMode() == 'linux':
-                self.gui.bootie.setIcon(QIcon(':/resources/icons/buttons/nuvola_apps_usb.png'))
-                self.gui.bootie.setText('Recovery\nMode')
-            elif self.gui.getActiveMode() == 'bootie':
-                self.gui.bootie.setIcon(QIcon(':/resources/icons/buttons/restart.png'))
-                self.gui.bootie.setText('Reset')
-        else:
-            self.gui.setWidgetsEnabled(False)
-            self.gui.activeDevice = None
-            self.gui.deviceButtons = [QLabel('<h2>No Connected Devices</h2>')]
-            self.gui.deviceButtons[0].setAlignment(Qt.AlignCenter)
-            self.gui.deviceBoxLayout.addWidget(self.gui.deviceButtons[0])
-
-    def editLabel(self, label):
-        label.setReadOnly(True)
-        if label.text() == self.gui.devices[label.devid][3]:
-            if self.gui.config['device_aliases'][self.gui.devices[label.devid][1]]:
-                del self.gui.config['device_aliases'][self.gui.devices[label.devid][1]]
-        else:
-            self.gui.config['device_aliases'][self.gui.devices[label.devid][1]] = label.text()
-        self.gui.save_config()
-
-class DebugFactory(ReconnectingClientFactory):
-    
-    maxDelay = 10
-    factor = 1.05
-    
-    def __init__(self, gui):
-        self.gui = gui
-    
-    def buildProtocol(self, addr):
-        self.resetDelay()
-        return NovacomDebugClient(self.gui)
-    
-    def startedConnecting(self, connector):
-        self.gui.updateStatusBar(False, 'Connecting to novacomd ...')
-
-    def clientConnectionLost(self, connector, reason):
-        self.gui.updateStatusBar(False, 'Connection to novacomd lost!')
-        ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
-
-    def clientConnectionFailed(self, connector, reason):
-        self.gui.updateStatusBar(False, 'Connection to novacomd failed!')
-        ReconnectingClientFactory.clientConnectionFailed(self, connector, reason)
 
 class ProgressDlg(QDialog):
 
@@ -1003,9 +904,64 @@ class MainWindow(QMainWindow):
         self.deviceBoxLayout.addWidget(self.deviceButtons[0])
         self.setWidgetsEnabled(False)
                         
-        reactor.connectTCP('localhost', 6970, DebugFactory(self))
-        
+        QTimer.singleShot(0, self.pollDevices)
+
         self.show()
+
+    def editLabel(self, label):
+        label.setReadOnly(True)
+        if label.text() == self.devices[label.devid][3]:
+            if self.config['device_aliases'][self.devices[label.devid][1]]:
+                del self.config['device_aliases'][self.devices[label.devid][1]]
+        else:
+            self.config['device_aliases'][self.devices[label.devid][1]] = label.text()
+        self.save_config()
+
+    def pollDevices(self):
+        d = ClientCreator(reactor, DeviceCollector, Deferred()).connectTCP('localhost', 6968)
+        d.addCallback(gotProtocol, self.processDevices)
+        
+    def processDevices(self, devices):
+
+        if self.devices != devices:
+
+            self.devices = devices
+                    
+            ndev = len(self.devices)
+            for device in self.deviceButtons:
+                device.hide()
+                self.deviceBoxLayout.removeWidget(device)
+                del device
+            
+            noActive = True
+            if ndev > 0:
+                self.deviceButtons = [None] * ndev 
+                for i in range(0,ndev):
+                    self.deviceButtons[i] = DeviceButton(self, self.devices[i])
+                    if self.devices[i][1] == self.activeDevice:
+                        noActive = False
+                        self.deviceButtons[i].setActive(True)
+                    else:
+                        self.deviceButtons[i].setActive(False)
+                    self.deviceBoxLayout.addWidget(self.deviceButtons[i])
+                if noActive:
+                    self.activeDevice = self.devices[0][1]
+                    self.deviceButtons[0].setActive(True)
+                self.setWidgetsEnabled(True)
+                if self.getActiveMode() == 'linux':
+                    self.bootie.setIcon(QIcon(':/resources/icons/buttons/nuvola_apps_usb.png'))
+                    self.bootie.setText('Recovery\nMode')
+                elif self.getActiveMode() == 'bootie':
+                    self.bootie.setIcon(QIcon(':/resources/icons/buttons/restart.png'))
+                    self.bootie.setText('Reset')
+            else:
+                self.setWidgetsEnabled(False)
+                self.activeDevice = None
+                self.deviceButtons = [QLabel('<h2>No Connected Devices</h2>')]
+                self.deviceButtons[0].setAlignment(Qt.AlignCenter)
+                self.deviceBoxLayout.addWidget(self.deviceButtons[0])
+            
+        QTimer.singleShot(1000, self.pollDevices)
         
     def showAbout(self):
         AboutDlg(self)

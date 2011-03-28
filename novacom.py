@@ -3,6 +3,7 @@ import struct, sys
 from twisted.internet import protocol
 from twisted.internet.protocol import Factory, Protocol
 from twisted.protocols.basic import LineReceiver
+from twisted.internet.defer import Deferred
 
 class NovacomDebug(LineReceiver):
     
@@ -116,10 +117,14 @@ class Novacom(Protocol):
         
 class DeviceCollector(Protocol):
     
-    devices = []
+    def __init__(self, finished):
+        self.finished = finished
     
     def dataReceived(self, data):
         self.devices = []
         for d in data[:-1].split('\n'):
             d = d.split(' ')
             self.devices.append((int(d[0]), d[1], d[2], d[3]))
+            
+    def connectionLost(self, reason):
+        self.finished.callback(self.devices)
