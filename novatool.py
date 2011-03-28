@@ -900,6 +900,8 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(0, self.pollDevices)
 
         self.show()
+        self.activateWindow()
+        self.raise_()
 
     def editLabel(self, label):
         label.setReadOnly(True)
