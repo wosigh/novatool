@@ -128,13 +128,12 @@ def cmd_installIPKG(protocol, file):
     protocol.transport.write('put file://%s/%s\n' % (REMOTE_TEMP, protocol.file__))
 
 class FileDownloader(protocol.Protocol):
-    def __init__(self, finished, length, progress_callback=None):
-        self.finished = finished
-        self.length = length
-        self.remaining = self.length
-        self.recieved = 0
-        self.progress_callback = progress_callback
-        self.data = ''
+    
+    recieved = 0
+    data = ''
+    
+    def __init__(self, agent):
+        self.agent = agent
 
     def dataReceived(self, bytes):
         self.data = ''.join([self.data, bytes])
@@ -144,37 +143,28 @@ class FileDownloader(protocol.Protocol):
 
     def connectionLost(self, reason):
         self.finished.callback(self.data)
+        
+    def _prepare(self, response, progress_callback):
+        self.finished = Deferred()
+        self.length = response.length
+        self.progress_callback = progress_callback
+        response.deliverBody(self)
+        return self.finished
+        
+    def download(self, url, progress_callback=None):
+        d = self.agent.request('GET', url)
+        return d.addCallback(self._prepare, progress_callback)
 
-def cbRequest(response, progress_callback):
-    finished = Deferred()
-    response.deliverBody(FileDownloader(finished, response.length, progress_callback))
-    return finished
-
-def putFile(data, protocol):
+def cmd_put_ipk(data, protocol):
     protocol.data__ = data
     protocol.transport.write('put file://%s/%s\n' % (REMOTE_TEMP, protocol.file__))
 
 def cmd_installIPKG_URL(protocol, url):
     protocol.file__ = url.split('/')[-1]
     protocol.gui.update_progress(0, 'Stage 1: Downloading IPK')
-    agent = Agent(reactor)
-    d = agent.request('GET', url)
-    d = d.addCallback(cbRequest, protocol.gui.update_progress)
-    d.addCallback(putFile, protocol)
-    '''req = urllib2.Request(url)
-    try:
-        f = urllib2.urlopen(req)
-        total_size = int(f.info().getheader('Content-Length').strip())
-        
-        protocol.data__ = chunk_read(f, total_size, report_hook=protocol.chunk_report)
-        f.close()
-        protocol.file__ = url.split('/')[-1]
-        protocol.transport.write('put file://%s/%s\n' % (REMOTE_TEMP, protocol.file__))
-    except urllib2.URLError, msg:
-        protocol.gui.presult = (False,'URLError: %s' % (msg.reason[1]))
-        protocol.gui.setResult(False)
-        protocol.gui.done(True)'''
-    
+    d = FileDownloader(Agent(reactor)).download(url, protocol.gui.update_progress)
+    d.addCallback(cmd_put_ipk, protocol)
+       
 class NovacomGet(Novacom):
     
     file__ = None
@@ -481,7 +471,7 @@ class ProgressDlg(QDialog):
 
     def __init__(self, port, parent=None, imsg=''):
         super(ProgressDlg, self).__init__(parent)
-        self.presult = None
+        self.presult = (False,False)
         self.setModal(True)
         self.setMinimumSize(300,125)
         self.buttonBox = QDialogButtonBox()
@@ -500,6 +490,7 @@ class ProgressDlg(QDialog):
         self.setSizeGripEnabled(False)
         
     def closePress(self):
+        self.setResult(True)
         self.done(True)
         
     def update_progress(self, p=None, msg=None):
@@ -512,10 +503,8 @@ class ProgressDlg(QDialog):
         QTimer.singleShot(0, something)
         self.show()
         self.setFixedSize(self.width(),self.height())
-        ret = None
-        if self.exec_():
-            ret = self.presult
-        return ret
+        self.exec_()
+        return self.presult
         
 class InstallDlg(QDialog):
     
@@ -1200,7 +1189,7 @@ class MainWindow(QMainWindow):
             c = ClientCreator(reactor, NovacomInstallIPKG, dlg, port)
             d = c.connectTCP('localhost', port)
             ret = dlg.do_something((lambda: d.addCallback(cmd_installIPKG_URL, PREWARE_LATEST)))
-            if not ret[0]:
+            if not ret[0] and ret[1]:
                 QMessageBox.warning(self, 'Error', ret[1], QMessageBox.Close)
             
     def closeEvent(self, event=None):
