@@ -140,7 +140,7 @@ class FileDownloader(protocol.Protocol):
         self.data = ''.join([self.data, bytes])
         self.recieved += len(bytes)
         if self.progress_callback:
-            self.progress_callback(int(self.recieved / self.length * 100))
+            self.progress_callback(self.recieved / self.length * 100)
 
     def connectionLost(self, reason):
         self.finished.callback(self.data)
@@ -506,7 +506,7 @@ class ProgressDlg(QDialog):
         if msg != None:
             self.state.setText(msg)
         if p != None:
-            self.progress.setValue(p)
+            self.progress.setValue(int(p))
             
     def do_something(self, something):
         QTimer.singleShot(0, something)
