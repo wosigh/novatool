@@ -117,6 +117,8 @@ class Novacom(Protocol):
         
 class DeviceCollector(Protocol):
     
+    devices = []
+    
     def __init__(self, finished):
         self.finished = finished
     
