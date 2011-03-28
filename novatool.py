@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import division
 import subprocess, os, sys, platform
 
 githash = None
@@ -30,7 +31,7 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 from devicebutton import *
 import qt4reactor
-import tempfile, shutil, struct, tarfile, shlex, socket
+import tempfile, shutil, struct, tarfile, shlex, socket, pprint
 if sys.platform == 'darwin':
     import _scproxy
 
@@ -44,6 +45,8 @@ APP_NAME = 'novatool'
 app = QApplication(sys.argv)
 qt4reactor.install()
 
+from twisted.web.client import Agent
+from twisted.internet.defer import Deferred
 from twisted.internet import reactor, protocol
 from twisted.internet.protocol import ClientCreator, ReconnectingClientFactory
 from twisted.internet.error import ConnectionRefusedError
@@ -124,12 +127,45 @@ def cmd_installIPKG(protocol, file):
     protocol.file__ = file.split('/')[-1]
     protocol.transport.write('put file://%s/%s\n' % (REMOTE_TEMP, protocol.file__))
 
+class FileDownloader(protocol.Protocol):
+    def __init__(self, finished, length, progress_callback=None):
+        self.finished = finished
+        self.length = length
+        self.remaining = self.length
+        self.recieved = 0
+        self.progress_callback = progress_callback
+        self.data = ''
+
+    def dataReceived(self, bytes):
+        self.data = ''.join([self.data, bytes])
+        self.recieved += len(bytes)
+        if self.progress_callback:
+            self.progress_callback(int(self.recieved / self.length * 100))
+
+    def connectionLost(self, reason):
+        self.finished.callback(self.data)
+
+def cbRequest(response, progress_callback):
+    finished = Deferred()
+    response.deliverBody(FileDownloader(finished, response.length, progress_callback))
+    return finished
+
+def putFile(data, protocol):
+    protocol.data__ = data
+    protocol.transport.write('put file://%s/%s\n' % (REMOTE_TEMP, protocol.file__))
+
 def cmd_installIPKG_URL(protocol, url):
-    req = urllib2.Request(url)
+    protocol.file__ = url.split('/')[-1]
+    protocol.gui.update_progress(0, 'Stage 1: Downloading IPK')
+    agent = Agent(reactor)
+    d = agent.request('GET', url)
+    d = d.addCallback(cbRequest, protocol.gui.update_progress)
+    d.addCallback(putFile, protocol)
+    '''req = urllib2.Request(url)
     try:
         f = urllib2.urlopen(req)
         total_size = int(f.info().getheader('Content-Length').strip())
-        protocol.gui.update_progress(0, 'Stage 1: Downloading IPK')
+        
         protocol.data__ = chunk_read(f, total_size, report_hook=protocol.chunk_report)
         f.close()
         protocol.file__ = url.split('/')[-1]
@@ -137,7 +173,7 @@ def cmd_installIPKG_URL(protocol, url):
     except urllib2.URLError, msg:
         protocol.gui.presult = (False,'URLError: %s' % (msg.reason[1]))
         protocol.gui.setResult(False)
-        protocol.gui.done(True)
+        protocol.gui.done(True)'''
     
 class NovacomGet(Novacom):
     
