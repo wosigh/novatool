@@ -192,7 +192,7 @@ class NovacomGet(Novacom):
         
         if ret == QMessageBox.Save:
             filename = self.file__.split('/')[-1]
-            filename = QFileDialog.getSaveFileName(self.gui, 'Save file', filename)
+            filename = QFileDialog.getSaveFileName(self.gui, 'Save file', filename, options=QFileDialog.DontUseNativeDialog)
             print filename
             if filename[0]:
                 f = open(str(filename[0]), 'w')
@@ -453,7 +453,7 @@ class InstallDlg(QDialog):
             self.done(True)
         
     def pickfile(self):
-        self.cmd.setText(str(QFileDialog.getOpenFileName(self, caption='IPKG', filter='IPKG (*.ipk)')[0]))
+        self.cmd.setText(str(QFileDialog.getOpenFileName(self, caption='IPKG', filter='IPKG (*.ipk)', options=QFileDialog.DontUseNativeDialog)[0]))
         
 class RemoteFileModel(QAbstractTableModel): 
     
@@ -1073,7 +1073,7 @@ class MainWindow(QMainWindow):
     def sendFile(self):
         port = self.getActivePort()
         if port:
-            infile = QFileDialog.getOpenFileName(self, caption='Send file')
+            infile = QFileDialog.getOpenFileName(self, caption='Send file', options=QFileDialog.DontUseNativeDialog)
             if infile[0]:
                 outfile, ok = QInputDialog.getText(self, 'Send file', 'Path to file:')
                 if ok:
@@ -1087,7 +1087,7 @@ class MainWindow(QMainWindow):
     def memBoot(self):
         port = self.getActivePort()
         if port:
-            infile = QFileDialog.getOpenFileName(self, caption='Mem boot kernel')
+            infile = QFileDialog.getOpenFileName(self, caption='Mem boot kernel', options=QFileDialog.DontUseNativeDialog)
             if infile[0]:
                 f = open(str(infile[0]),'r')
                 data = f.read()
