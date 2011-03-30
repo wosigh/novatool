@@ -99,7 +99,9 @@ def chunk_read(response, total_size, chunk_size=8192, report_hook=None):
 def cmd_getFile(protocol, file):
     
     protocol.file__ = file
+    protocol.finished = Deferred()
     protocol.transport.write('get file://%s\n' % (file))
+    return protocol.finished
 
 def cmd_sendFile(protocol, file, dest):
     
@@ -174,43 +176,24 @@ def cmd_installIPKG_URL(protocol, url):
 class NovacomGet(Novacom):
     
     file__ = None
-
-    def __init__(self, gui):
-        self.gui = gui
+    finished = None
+   
+    def __init__(self, dlg, size):
+        self.dlg = dlg
+        self.size = size
+        self.recieved = 0
+        
+    def cmd_stdout_event(self, data):
+        self.recieved += len(data)
+        self.dlg.update_progress(self.recieved / self.size * 100, 'Transfering file...')
         
     def cmd_return(self, ret):
         self.transport.loseConnection()
-                
-    def cmd_stdout(self, data):
-        msgBox = QMessageBox()
-        msgBox.setText('The file has been retrieved successfully.')
-        msgBox.setInformativeText('Do you want to save the file?')
-        msgBox.setStandardButtons(QMessageBox.Discard | QMessageBox.Open | QMessageBox.Save )
-        msgBox.setDefaultButton(QMessageBox.Save)
-        msgBox.setDetailedText(data)
-        ret = msgBox.exec_()
-        
-        if ret == QMessageBox.Save:
-            filename = self.file__.split('/')[-1]
-            if platform.system() == 'Darwin':
-                filename = QFileDialog.getSaveFileName(self.gui, 'Save file', filename, options=QFileDialog.DontUseNativeDialog)
-            else:
-                filename = QFileDialog.getSaveFileName(self.gui, 'Save file', filename)
-            print filename
-            if filename[0]:
-                f = open(str(filename[0]), 'w')
-                f.write(data)
-                f.close()
-        elif ret == QMessageBox.Open:
-            f = tempfile.NamedTemporaryFile(dir=self.gui.tempdir, delete=False)
-            f.write(data)
-            f.close()
-            if platform.system() == 'Darwin':
-                subprocess.call(['open',f.name])
-            elif platform.system() == 'Windows':
-                subprocess.call(['start',f.name])
-            else:
-                subprocess.call(['xdg-open',f.name])
+        if ret == 0:
+            self.dlg.close()
+            self.finished.callback((ret,self.stdout))
+        else:
+            self.dlg.closeButton.setEnabled(True)
 
 class NovacomSend(Novacom):
     
@@ -518,6 +501,7 @@ class fileListEvent(QObject):
 
         if event.type() == QEvent.MouseButtonDblClick:
             idx = self.parent.fileList.selectedIndexes()[0].row()
+            self.parent.size = int(self.parent.fileListModel.arraydata[idx][1])
             if self.parent.path == '/':
                 self.parent.path = '%s%s' % (self.parent.path, self.parent.fileListModel.arraydata[idx][0])
             else:
@@ -543,6 +527,7 @@ class FileDlg(QDialog):
         super(FileDlg, self).__init__(parent)
         self.port = port
         self.path = path
+        self.size = 0
         
         self.setMinimumSize(500,400)
         
@@ -585,7 +570,7 @@ class FileDlg(QDialog):
     
     def pickFile(self):
         if self.exec_():
-            return self.path
+            return (self.path, self.size)
         else:
             return None
 
@@ -1045,7 +1030,6 @@ class MainWindow(QMainWindow):
     def installDriver(self):
         dlg = ProgressDlg(self, imsg='Preparing to download/install novacom...')
         dl = dlg.do_something((lambda: self.download_novacom_installer(dlg, jar, self.tempdir)))
-        print dl
         if dl[0]:
             ret = QMessageBox.question(self, 'Message', \
                      'Do you want to launch the Novacom installer?', \
@@ -1068,15 +1052,53 @@ class MainWindow(QMainWindow):
         os.remove(self.ipc_file)
         self.save_config()
         reactor.stop()
+        
+    def handleFile(self, data, filename):
+        msgBox = QMessageBox()
+        if data[0] == 0:
+            msgBox.setText('The file has been retrieved successfully.')
+            msgBox.setInformativeText('Do you want to save the file?')
+            msgBox.setStandardButtons(QMessageBox.Discard | QMessageBox.Open | QMessageBox.Save )
+            msgBox.setDefaultButton(QMessageBox.Save)
+            msgBox.setDetailedText(data[1])
+        else:
+            msgBox.setText('The file failed to be retrieved.')
+            msgBox.setStandardButtons(QMessageBox.Close)
+        ret = msgBox.exec_()
+        
+        if data[0] == 0 and ret == QMessageBox.Save:
+            if platform.system() == 'Darwin':
+                filename = QFileDialog.getSaveFileName(self, 'Save file', filename, options=QFileDialog.DontUseNativeDialog)
+            else:
+                filename = QFileDialog.getSaveFileName(self, 'Save file', filename)
+            if filename[0]:
+                f = open(str(filename[0]), 'w')
+                f.write(data[1])
+                f.close()
+        elif ret == QMessageBox.Open:
+            f = tempfile.NamedTemporaryFile(dir=self.tempdir, delete=False)
+            f.write(data[1])
+            f.close()
+            if platform.system() == 'Darwin':
+                subprocess.call(['open',f.name])
+            elif platform.system() == 'Windows':
+                subprocess.call(['start',f.name])
+            else:
+                subprocess.call(['xdg-open',f.name])
+                
+    def transfer_file(self, dlg, port, filename, size):
+        c = ClientCreator(reactor, NovacomGet, dlg, size)
+        d = c.connectTCP('localhost', port)
+        d = d.addCallback(cmd_getFile, str(filename))
+        d = d.addCallback(self.handleFile, str(filename.split('/')[-1]))
                 
     def getFile(self):
         port = self.getActivePort()
         if port:
-            filename = FileDlg(port, self).pickFile()
+            filename, size = FileDlg(port, self).pickFile()
             if filename:
-                c = ClientCreator(reactor, NovacomGet, self)
-                d = c.connectTCP('localhost', port)
-                d.addCallback(cmd_getFile, str(filename))
+                dlg = ProgressDlg(self, imsg='Preparing to transfer file...')
+                dl = dlg.do_something((lambda: self.transfer_file(dlg, port, filename, size)))
                 
     def sendFile(self):
         port = self.getActivePort()
